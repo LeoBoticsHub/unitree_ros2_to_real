@@ -30,6 +30,11 @@ add_executable(ros2_position_example src/ros2_position_example.cpp)
 target_link_libraries(ros2_position_example ${EXTRA_LIBS})
 ament_target_dependencies(ros2_position_example rclcpp ros2_unitree_legged_msgs)
 
+add_executable(unitree_high_ros2_control src/unitree_high_ros2_control.cpp)
+target_link_libraries(ros2_position_example ${EXTRA_LIBS})
+ament_target_dependencies(unitree_high_ros2_control rclcpp ros2_unitree_legged_msgs)
+
+# install
 install(TARGETS
     ros2_udp
     ros2_walk_example
