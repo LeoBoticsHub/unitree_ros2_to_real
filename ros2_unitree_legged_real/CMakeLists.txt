@@ -17,6 +17,10 @@ set(EXTRA_LIBS -pthread unitree_legged_sdk)
 
 set(CMAKE_CXX_FLAGS "-O3")
 
+ament_export_include_directories(include)
+ament_export_libraries(unitree_service_handler)
+
+ament_package()
 
 add_executable(ros2_udp src/ros2_udp.cpp)
 target_link_libraries(ros2_udp ${EXTRA_LIBS})
@@ -31,18 +35,40 @@ target_link_libraries(ros2_position_example ${EXTRA_LIBS})
 ament_target_dependencies(ros2_position_example rclcpp ros2_unitree_legged_msgs)
 
 add_executable(unitree_high_ros2_control src/unitree_high_ros2_control.cpp)
-target_link_libraries(ros2_position_example ${EXTRA_LIBS})
+target_link_libraries(unitree_high_ros2_control ${EXTRA_LIBS})
 ament_target_dependencies(unitree_high_ros2_control rclcpp ros2_unitree_legged_msgs)
+
+add_library(unitree_service_handler SHARED src/unitree_services_handler.cpp)
+target_link_libraries(unitree_service_handler ${EXTRA_LIBS})
+ament_target_dependencies(unitree_service_handler rclcpp ros2_unitree_legged_msgs)
+
 
 # install
 install(TARGETS
     ros2_udp
     ros2_walk_example
     ros2_position_example
+    unitree_high_ros2_control
     DESTINATION lib/${PROJECT_NAME}
 )
 
-ament_package()
+install(
+  TARGETS unitree_service_handler
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION lib
+)
+
+install(
+    DIRECTORY include/${PROJECT_NAME}
+    DESTINATION include
+)
+
+install(
+    DIRECTORY launch
+    DESTINATION share/${PROJECT_NAME}
+)
+
 
 
 
