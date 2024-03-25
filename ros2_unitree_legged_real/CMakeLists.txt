@@ -5,6 +5,14 @@ project(ros2_unitree_legged_real)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 
+find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(std_srvs REQUIRED)
+
+set(ROS_DEPS rclcpp sensor_msgs nav_msgs geometry_msgs tf2_ros std_srvs ros2_unitree_legged_msgs)
+
 find_package(ros2_unitree_legged_msgs REQUIRED)
 
 include_directories(
@@ -36,11 +44,11 @@ ament_target_dependencies(ros2_position_example rclcpp ros2_unitree_legged_msgs)
 
 add_executable(unitree_high_ros2_control src/unitree_high_ros2_control.cpp)
 target_link_libraries(unitree_high_ros2_control ${EXTRA_LIBS})
-ament_target_dependencies(unitree_high_ros2_control rclcpp ros2_unitree_legged_msgs)
+ament_target_dependencies(unitree_high_ros2_control ${ROS_DEPS})
 
 add_library(unitree_service_handler SHARED src/unitree_services_handler.cpp)
 target_link_libraries(unitree_service_handler ${EXTRA_LIBS})
-ament_target_dependencies(unitree_service_handler rclcpp ros2_unitree_legged_msgs)
+ament_target_dependencies(unitree_service_handler ${ROS_DEPS})
 
 
 # install
