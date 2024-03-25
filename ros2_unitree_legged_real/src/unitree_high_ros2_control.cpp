@@ -12,121 +12,454 @@ UnitreeRos2HighController::UnitreeRos2HighController():
 
 void UnitreeRos2HighController::init_class()
 {
-    // TODO initialize custom loops and subscribers etc
+    // * set joint states size
+    joint_state_msg_.name.resize(N_MOTORS);
+    joint_state_msg_.position.resize(N_MOTORS);
+    joint_state_msg_.velocity.resize(N_MOTORS);
+    joint_state_msg_.effort.resize(N_MOTORS);
+
+    // * set odom frame ids
+    odom_H_trunk_.header.frame_id = ODOM_NAME;
+    odom_H_trunk_.child_frame_id = BASE_LINK_NAME;
+
+    // * initialize time
+    t_ = t_prev_ = t_timer_ = t_mode_timer_ = this->get_clock()->now();
+    timer_on_ = false;
+
+    // * Subscribers
+    cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+        "cmd_vel", 1,
+        std::bind(&UnitreeRos2HighController::cmdVelCallback, this, std::placeholders::_1)
+    );
+
+    // * Publishers
+    imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("imu", 1);
+    joint_states_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 1);
+    odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("robot_odom", 1);
+    tf_pub_ = std::make_shared<tf2_ros::TransformBroadcaster>(*this);
+
+    // * Services
+    power_off_srv_ = this->create_service<std_srvs::srv::Trigger>("power_off",                 
+        std::bind(&UnitreeRos2HighController::powerOffCallback,
+            this, std::placeholders::_1, std::placeholders::_2
+        )
+    );
+    emergency_button_srv_ = this->create_service<std_srvs::srv::Trigger>("power_off",                 
+        std::bind(&UnitreeRos2HighController::emergencyStopCallback,
+            this, std::placeholders::_1, std::placeholders::_2
+        )
+    );
+    set_mode_srv_ = this->create_service<ros2_unitree_legged_msgs::srv::SetInt>("set_robot_mode",                 
+        std::bind(&UnitreeRos2HighController::setRobotModeCallback,
+            this, std::placeholders::_1, std::placeholders::_2
+        )
+    );
+    get_mode_srv_ = this->create_service<ros2_unitree_legged_msgs::srv::GetInt>("get_robot_mode",                 
+        std::bind(&UnitreeRos2HighController::getRobotModeCallback,
+            this, std::placeholders::_1, std::placeholders::_2
+        )
+    );
+    set_gate_srv_ = this->create_service<ros2_unitree_legged_msgs::srv::SetInt>("set_gate_type",                 
+        std::bind(&UnitreeRos2HighController::setGateTypeCallback,
+            this, std::placeholders::_1, std::placeholders::_2
+        )
+    );
+    get_gate_srv_ = this->create_service<ros2_unitree_legged_msgs::srv::GetInt>("get_gate_type",                 
+        std::bind(&UnitreeRos2HighController::getGateTypeCallback,
+            this, std::placeholders::_1, std::placeholders::_2
+        )
+    );
+    set_speed_srv_ = this->create_service<ros2_unitree_legged_msgs::srv::SetInt>("set_speed_level",                 
+        std::bind(&UnitreeRos2HighController::setSpeedLevelCallback,
+            this, std::placeholders::_1, std::placeholders::_2
+        )
+    );
+    battery_state_srv_ = this->create_service<ros2_unitree_legged_msgs::srv::GetBatteryState>("get_battery_state",                 
+        std::bind(&UnitreeRos2HighController::batteryStateCallback,
+            this, std::placeholders::_1, std::placeholders::_2
+        )
+    );
+    set_foot_height_srv_ = this->create_service<ros2_unitree_legged_msgs::srv::SetFloat>("set_foot_height",                 
+        std::bind(&UnitreeRos2HighController::setFootHeightCallback,
+            this, std::placeholders::_1, std::placeholders::_2
+        )
+    );
+    get_foot_height_srv_ = this->create_service<ros2_unitree_legged_msgs::srv::GetFloat>("get_foot_height",                 
+        std::bind(&UnitreeRos2HighController::getFootHeightCallback,
+            this, std::placeholders::_1, std::placeholders::_2
+        )
+    );
+    set_body_height_srv_ = this->create_service<ros2_unitree_legged_msgs::srv::SetFloat>("set_body_height",                 
+        std::bind(&UnitreeRos2HighController::setBodyHeightCallback,
+            this, std::placeholders::_1, std::placeholders::_2
+        )
+    );
+    get_body_height_srv_ = this->create_service<ros2_unitree_legged_msgs::srv::GetFloat>("get_body_height",                 
+        std::bind(&UnitreeRos2HighController::getBodyHeightCallback,
+            this, std::placeholders::_1, std::placeholders::_2
+        )
+    );
+    set_body_orientation_srv_ = this->create_service<ros2_unitree_legged_msgs::srv::SetBodyOrientation>("set_body_orientation",                 
+        std::bind(&UnitreeRos2HighController::setBodyOrientationCallback,
+            this, std::placeholders::_1, std::placeholders::_2
+        )
+    );
+
+    // * High state UDP loop function
+    LoopFunc loop_udpSend("high_udp_send", 0.002, 3, boost::bind(&Custom::highUdpSend, &custom_));
+    LoopFunc loop_udpRecv("high_udp_recv", 0.002, 3, boost::bind(&Custom::highUdpRecv, &custom_));
+
+    // * State publisher loop function
+    LoopFunc loop_StatePub("high_state_pub", 0.0025, 3, boost::bind(&UnitreeRos2HighController::highStatePublisher, this));
+
+    loop_udpSend.start();
+    loop_udpRecv.start();
+    loop_StatePub.start();
+
+    printf("HIGHLEVEL is initialized\n");
 }
 
 void UnitreeRos2HighController::highStatePublisher()
 {
+    t_ = this->get_clock()->now();
+
+    if (t_ != t_prev_)
+    {
+        // joint states
+        joint_state_msg_.header.stamp = t_;
+        joint_state_msg_.header.frame_id = BASE_LINK_NAME;
+
+        for (unsigned int motor_id = 0; motor_id < N_MOTORS; ++motor_id)
+	    {
+            joint_state_msg_.name[motor_id]     = b1_motor_names[motor_id];
+            joint_state_msg_.position[motor_id] = static_cast<double>(custom_.high_state.motorState[b1_motor_idxs[motor_id]].q);
+            joint_state_msg_.velocity[motor_id] = static_cast<double>(custom_.high_state.motorState[b1_motor_idxs[motor_id]].dq); // NOTE: this order is different than google
+            joint_state_msg_.effort[motor_id]   = static_cast<double>(custom_.high_state.motorState[b1_motor_idxs[motor_id]].tauEst);
+	    }
+
+        // imu
+	    imu_msg_.header.stamp = t_;
+	    imu_msg_.header.frame_id = IMU_NAME;
+	    imu_msg_.orientation.w = static_cast<double>(custom_.high_state.imu.quaternion[0]);
+	    imu_msg_.orientation.x = static_cast<double>(custom_.high_state.imu.quaternion[1]);
+	    imu_msg_.orientation.y = static_cast<double>(custom_.high_state.imu.quaternion[2]);
+	    imu_msg_.orientation.z = static_cast<double>(custom_.high_state.imu.quaternion[3]);
+	    imu_msg_.angular_velocity.x = static_cast<double>(custom_.high_state.imu.gyroscope[0]);
+	    imu_msg_.angular_velocity.y = static_cast<double>(custom_.high_state.imu.gyroscope[1]);
+	    imu_msg_.angular_velocity.z = static_cast<double>(custom_.high_state.imu.gyroscope[2]);
+	    imu_msg_.linear_acceleration.x = static_cast<double>(custom_.high_state.imu.accelerometer[0]);
+	    imu_msg_.linear_acceleration.y = static_cast<double>(custom_.high_state.imu.accelerometer[1]);
+	    imu_msg_.linear_acceleration.z = static_cast<double>(custom_.high_state.imu.accelerometer[2]);
+
+        // odom
+	    odom_msg_.header.stamp = t_;
+	    odom_msg_.header.frame_id            = ODOM_NAME;
+	    odom_msg_.child_frame_id             = BASE_LINK_NAME;
+	    odom_msg_.pose.pose.position.x       = static_cast<double>(custom_.high_state.position[0]);
+	    odom_msg_.pose.pose.position.y       = static_cast<double>(custom_.high_state.position[1]);
+	    odom_msg_.pose.pose.position.z       = static_cast<double>(custom_.high_state.position[2]);
+	    odom_msg_.pose.pose.orientation      = imu_msg_.orientation;
+	    odom_msg_.twist.twist.linear.x       = static_cast<double>(custom_.high_state.velocity[0]);
+	    odom_msg_.twist.twist.linear.y       = static_cast<double>(custom_.high_state.velocity[1]);
+	    odom_msg_.twist.twist.linear.z       = static_cast<double>(custom_.high_state.velocity[2]);
+	    odom_msg_.twist.twist.angular        = imu_msg_.angular_velocity;
+
+        // odom -> base_link
+        odom_H_trunk_.transform.translation.x       = static_cast<double>(custom_.high_state.position[0]);
+	    odom_H_trunk_.transform.translation.y       = static_cast<double>(custom_.high_state.position[1]);
+	    odom_H_trunk_.transform.translation.z       = static_cast<double>(custom_.high_state.position[2]);
+	    odom_H_trunk_.transform.rotation            = imu_msg_.orientation;
+        tf_pub_->sendTransform(odom_H_trunk_);
+    }
     
 }
 
-void UnitreeRos2HighController::cmdVelCallback(const geometry_msgs::msg::Twist::ConstPtr &msg)
+void UnitreeRos2HighController::cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
-
+    // Check if wirless remote command are given
+    if ( std::abs(custom_.keyData.rx) < 0.1 && 
+         std::abs(custom_.keyData.lx) < 0.1 && 
+         std::abs(custom_.keyData.ry) < 0.1 && 
+         std::abs(custom_.keyData.ly) < 0.1 )
+    {
+        // check timer if previous wirless remote commands have been receives
+        if(timer_on_ && (t_ - t_timer_).seconds() >= 5 || !timer_on_)
+        {
+            custom_.high_cmd.velocity[0] = msg->linear.x;
+            custom_.high_cmd.velocity[1] = msg->linear.y;
+            custom_.high_cmd.yawSpeed = msg->angular.z;
+  
+            timer_on_ = false;
+        }
+    }
+    else
+    {
+        // initialize timer if wirless remote commands are received
+        if(!timer_on_)
+            timer_on_ = true;
+        t_timer_ = this->get_clock()->now();
+        custom_.high_cmd.velocity[0] = 0;
+        custom_.high_cmd.velocity[1] = 0;
+        custom_.high_cmd.yawSpeed = 0;
+    }
 }
 
 bool UnitreeRos2HighController::powerOffCallback(
-    std_srvs::srv::Trigger::Request& req, 
-    std_srvs::srv::Trigger::Response& res
+    std::shared_ptr<std_srvs::srv::Trigger::Request> req, 
+    std::shared_ptr<std_srvs::srv::Trigger::Response> res
 )
 {
+    // only if in stand down position
+    if(custom_.high_state.mode == 5)
+    {
+        BmsCmd battery_cmd;
+        battery_cmd.off = 0xA5;
+        sleep(3);
+        custom_.high_cmd.bms = battery_cmd;
+    }
+    else
+    {
+        res->success = false;
+        res->message = "The robot is not in stand down position. Cannot power off in this situation.";
+    }
 
+    return true;
 }
 
 bool UnitreeRos2HighController::emergencyStopCallback(
-    std_srvs::srv::Trigger::Request& req, 
-    std_srvs::srv::Trigger::Response& res
+    std::shared_ptr<std_srvs::srv::Trigger::Request> req, 
+    std::shared_ptr<std_srvs::srv::Trigger::Response> res
 )
 {
-    
+    BmsCmd battery_cmd;
+    battery_cmd.off = 0xA5;
+    custom_.high_cmd.bms = battery_cmd;
+
+    res->success = true;
+    res->message = "Powering off the robot.";
+
+    return true;
 }
 
 bool UnitreeRos2HighController::batteryStateCallback(
-    ros2_unitree_legged_msgs::srv::GetBatteryState::Request& req, 
-    ros2_unitree_legged_msgs::srv::GetBatteryState::Response& res
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::GetBatteryState::Request> req, 
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::GetBatteryState::Response> res
 )
 {
+    battery_msg_.header.stamp = t_;
+    battery_msg_.header.frame_id = BASE_LINK_NAME;
+    battery_msg_.current = static_cast<float>(1000.0 * custom_.high_state.bms.current); // mA -> A
+    battery_msg_.voltage = static_cast<float>(1000.0 * avg<uint16_t>(&custom_.high_state.bms.cell_vol[0], 10)); // mV -> V
+    battery_msg_.percentage = custom_.high_state.bms.SOC;
+
+    res->battery_state = battery_msg_;
     
+    return true;   
 }
 
 bool UnitreeRos2HighController::setRobotModeCallback(
-    ros2_unitree_legged_msgs::srv::SetInt::Request& req, 
-    ros2_unitree_legged_msgs::srv::SetInt::Response& res
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::SetInt::Request> req, 
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::SetInt::Response> res
 )
 {
-    
+    // iterator on robot state mapping that point to the current mode value
+    auto map_iterator = robot_state_mapping.find(custom_.high_state.mode);
+
+    if ((t_ - t_mode_timer_).seconds() >= 3 && // check previous call timer
+        map_iterator != robot_state_mapping.end() && // check if map value exists (it should be useless because states should all exists)
+        std::find(map_iterator->second.begin(), map_iterator->second.end(), req->value) != 
+        map_iterator->second.end() // check if requested value is available in vector of possible states
+    )
+    {
+        custom_.high_cmd.euler[0] = 0;
+        custom_.high_cmd.euler[1] = 0;
+        custom_.high_cmd.euler[2] = 0;
+        custom_.high_cmd.velocity[0] = 0;
+        custom_.high_cmd.velocity[1] = 0;
+        custom_.high_cmd.yawSpeed    = 0;
+        custom_.high_cmd.mode = req->value;
+        res->success = true;
+        res->message = "Robot state set to: " + std::to_string(req->value);
+
+        t_mode_timer_ = t_;
+    }
+    else
+    {
+        res->success = false;
+        res->message = "Error! Invalid Robot state! \
+        Please be sure to wait some time before switching consecutive states. \
+        check also if Robot state switch from current mode " + std::to_string(custom_.high_state.mode) + \
+        "to requested state mode " + std::to_string(req->value) + " is permitted.";
+    }
+
+    return true;
 }
 
 bool UnitreeRos2HighController::getRobotModeCallback(
-    ros2_unitree_legged_msgs::srv::GetInt::Request& /* req */, 
-    ros2_unitree_legged_msgs::srv::GetInt::Response& res
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::GetInt::Request> /* req */, 
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::GetInt::Response> res
 )
 {
-    
+    res->value = custom_.high_state.mode;
+
+    return true;
 }
 
 bool UnitreeRos2HighController::setGateTypeCallback(
-    ros2_unitree_legged_msgs::srv::SetInt::Request& req, 
-    ros2_unitree_legged_msgs::srv::SetInt::Response& res
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::SetInt::Request> req, 
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::SetInt::Response> res
 )
 {
-    
+    if (req->value >= 0 && req->value <= 4)
+    {
+        custom_.high_cmd.gaitType = req->value;
+        custom_.high_cmd.velocity[0] = 0;
+        custom_.high_cmd.velocity[1] = 0;
+        custom_.high_cmd.yawSpeed    = 0;
+        res->success = true;
+        res->message = "Gate type set to: " + std::to_string(req->value);
+    }
+    else
+    {
+        res->success = false;
+        res->message = "Error! Invalid gate type! Please set a gate type between 0 and 4";
+    }
+
+    return true;
 }
 
 bool UnitreeRos2HighController::getGateTypeCallback(
-    ros2_unitree_legged_msgs::srv::GetInt::Request& /* req */, 
-    ros2_unitree_legged_msgs::srv::GetInt::Response& res
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::GetInt::Request> /* req */, 
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::GetInt::Response> res
 )
 {
-    
+    res->value = custom_.high_state.gaitType;
+
+    return true;
 }
 
 bool UnitreeRos2HighController::setSpeedLevelCallback(
-    ros2_unitree_legged_msgs::srv::SetInt::Request& req, 
-    ros2_unitree_legged_msgs::srv::SetInt::Response& res
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::SetInt::Request> req, 
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::SetInt::Response> res
 )
 {
-    
+    // apparently it works just in mode 3 // TODO TO BE CHECKED
+    if (custom_.high_state.mode == 3 && req->value >= 0 && req->value <= 2)
+    {
+        custom_.high_cmd.speedLevel = req->value;
+        custom_.high_cmd.velocity[0] = 0;
+        custom_.high_cmd.velocity[1] = 0;
+        custom_.high_cmd.yawSpeed    = 0;
+        res->success = true;
+        res->message = "Speed level set to: " + std::to_string(req->value);
+    }
+    else
+    {
+        res->success = false;
+        res->message = "Error! Invalid speed level! \
+        Please check if robot state mode is set to 3 and set a speed level between 0 and 2";
+    }
+
+    return true;
 }
 
 bool UnitreeRos2HighController::setFootHeightCallback(
-    ros2_unitree_legged_msgs::srv::SetFloat::Request& req, 
-    ros2_unitree_legged_msgs::srv::SetFloat::Response& res
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::SetFloat::Request> req, 
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::SetFloat::Response> res
 )
 {
-    
+    // check if the request is in the allowed delta bounds
+    if (req->value >= -0.1 && req->value <= 0.15)
+    {
+        custom_.high_cmd.footRaiseHeight = req->value;
+        res->success = true;
+        res->message = "Foot hight delta set to: " + std::to_string(req->value);
+    }
+    else
+    {
+        res->success = false;
+        res->message = "Error! Invalid foot height delta! \
+        Please provide a delta in the range [-0.1, 0.15].";
+    }
+
+    return true;
 }
 
 bool UnitreeRos2HighController::getFootHeightCallback(
-    ros2_unitree_legged_msgs::srv::GetFloat::Request& /* req */, 
-    ros2_unitree_legged_msgs::srv::GetFloat::Response& res
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::GetFloat::Request> /* req */, 
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::GetFloat::Response> res
 )
 {
-    
+    res->value = custom_.high_state.footRaiseHeight;
+
+    return true;
 }
 
 bool UnitreeRos2HighController::setBodyHeightCallback(
-    ros2_unitree_legged_msgs::srv::SetFloat::Request& req, 
-    ros2_unitree_legged_msgs::srv::SetFloat::Response& res
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::SetFloat::Request> req, 
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::SetFloat::Response> res
 )
 {
-    
+    // check if the request is in the allowed delta bounds
+    if (req->value >= -0.16 && req->value <= 0.16)
+    {
+        custom_.high_cmd.bodyHeight = req->value;
+        res->success = true;
+        res->message = "Body height delta set to: " + std::to_string(req->value);
+    }
+    else
+    {
+        res->success = false;
+        res->message = "Error! Invalid body height delta! \
+        Please provide a delta in the range [-0.1, 0.15].";
+    }
+
+    return true;
 }
 
 bool UnitreeRos2HighController::getBodyHeightCallback(
-    ros2_unitree_legged_msgs::srv::GetFloat::Request& /* req */, 
-    ros2_unitree_legged_msgs::srv::GetFloat::Response& res
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::GetFloat::Request> /* req */, 
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::GetFloat::Response> res
 )
 {
-    
+    res->value = custom_.high_state.bodyHeight;
+
+    return true;
 }
 
 bool UnitreeRos2HighController::setBodyOrientationCallback(
-    ros2_unitree_legged_msgs::srv::SetBodyOrientation::Request& req, 
-    ros2_unitree_legged_msgs::srv::SetBodyOrientation::Response& res
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::SetBodyOrientation::Request> req, 
+    std::shared_ptr<ros2_unitree_legged_msgs::srv::SetBodyOrientation::Response> res
 )
 {
+    // it works just in mode 1 andhas bounds for the three angles
+    if (custom_.high_state.mode == 1 && 
+        req->rpy.x >= -0.3 && req->rpy.x <= 0.3 &&
+        req->rpy.y >= -0.3 && req->rpy.y <= 0.3 &&
+        req->rpy.z >= -0.6 && req->rpy.z <= 0.6
+    )
+    {
+        custom_.high_cmd.euler[0] = req->rpy.x;
+        custom_.high_cmd.euler[0] = req->rpy.y;
+        custom_.high_cmd.euler[0] = req->rpy.z;
+        custom_.high_cmd.velocity[0] = 0;
+        custom_.high_cmd.velocity[1] = 0;
+        custom_.high_cmd.yawSpeed    = 0;
+        res->success = true;
+        res->message = "Robot orientation set to: roll = " + std::to_string(req->rpy.x) + ", pitch = " + \
+        std::to_string(req->rpy.y) + ", yaw = " + std::to_string(req->rpy.z);
+    }
+    else
+    {
+        res->success = false;
+        res->message = "Error! Invalid Robot orientation! \
+        Please check if robot state mode is set to 1 and set a robot orientation between \
+        roll range: [-0.3, 0.3], pitch range: [-0.3, 0.3], yaw range: [-0.6, 0.6]";
+    }
 
+    res->success = true;
+
+    return true;
 }
 
 int main(int argc, char * argv[])
