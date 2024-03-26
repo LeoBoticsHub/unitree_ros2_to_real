@@ -46,9 +46,9 @@ add_executable(unitree_high_ros2_control src/unitree_high_ros2_control.cpp)
 target_link_libraries(unitree_high_ros2_control ${EXTRA_LIBS})
 ament_target_dependencies(unitree_high_ros2_control ${ROS_DEPS})
 
-add_library(unitree_service_handler SHARED src/unitree_services_handler.cpp)
-target_link_libraries(unitree_service_handler ${EXTRA_LIBS})
-ament_target_dependencies(unitree_service_handler ${ROS_DEPS})
+add_library(unitree_ros2_client SHARED src/unitree_ros2_client.cpp)
+target_link_libraries(unitree_ros2_client ${EXTRA_LIBS})
+ament_target_dependencies(unitree_ros2_client ${ROS_DEPS})
 
 
 # install
