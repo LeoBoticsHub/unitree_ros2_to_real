@@ -37,7 +37,7 @@ To run the high level B1 controller, bash the workspace and run the following:
     ros2 run ros2_unitree_legged_real unitree_high_ros2_control
 ```
 
-## Client service handler interface
+## Unitree ROS 2 client interface
 
 To simplify interaction with the services spawn by `unitree_high_ros2_control` node, we provided a library containing the class `UnitreeRos2Client` which provide a easy to use interface with ros services. \
 See [unitree_ros2_client.hpp](ros2_unitree_legged_real/include/ros2_unitree_legged_real/unitree_ros2_client.hpp) and [unitree_services_handler.cpp](ros2_unitree_legged_real/src/unitree_ros2_client.cpp) to have an hint on how to use it.
