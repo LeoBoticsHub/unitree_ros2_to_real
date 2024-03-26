@@ -46,6 +46,9 @@ public:
     xRockerBtnDataStruct keyData;
 
 public:
+
+    using SharedPtr = std::shared_ptr<Custom>; 
+
     Custom(): 
         high_udp(8090, "192.168.123.220", 8082, sizeof(HighCmd), sizeof(HighState))
     {
@@ -85,10 +88,11 @@ class UnitreeRos2HighController : public rclcpp::Node
 private:
 
     // * UDP sender/receiver for robot high state
-    Custom custom_;
+    Custom::SharedPtr custom_;
 
     // * Subscribers
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr body_orient_sub_;
 
     // * Publishers
     rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
@@ -99,17 +103,14 @@ private:
     // * Services
     rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr power_off_srv_;
     rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr emergency_button_srv_;
-    rclcpp::Service<ros2_unitree_legged_msgs::srv::SetInt>::SharedPtr set_mode_srv_;
+    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stand_up_srv_;
+    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stand_down_srv_;
     rclcpp::Service<ros2_unitree_legged_msgs::srv::GetInt>::SharedPtr get_mode_srv_;
-    rclcpp::Service<ros2_unitree_legged_msgs::srv::SetInt>::SharedPtr set_gate_srv_;
-    rclcpp::Service<ros2_unitree_legged_msgs::srv::GetInt>::SharedPtr get_gate_srv_;
-    rclcpp::Service<ros2_unitree_legged_msgs::srv::SetInt>::SharedPtr set_speed_srv_;
     rclcpp::Service<ros2_unitree_legged_msgs::srv::GetBatteryState>::SharedPtr battery_state_srv_;
     rclcpp::Service<ros2_unitree_legged_msgs::srv::SetFloat>::SharedPtr set_foot_height_srv_;
     rclcpp::Service<ros2_unitree_legged_msgs::srv::SetFloat>::SharedPtr set_body_height_srv_;
     rclcpp::Service<ros2_unitree_legged_msgs::srv::GetFloat>::SharedPtr get_foot_height_srv_;
     rclcpp::Service<ros2_unitree_legged_msgs::srv::GetFloat>::SharedPtr get_body_height_srv_;
-    rclcpp::Service<ros2_unitree_legged_msgs::srv::SetBodyOrientation>::SharedPtr set_body_orientation_srv_;
 
     // * ROS messages
     sensor_msgs::msg::Imu imu_msg_;
@@ -140,22 +141,10 @@ private:
         "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint", 
     }};
 
-    // * Robot states map
-    const std::map<int,std::vector<int>> robot_state_mapping =  {
-        {0, std::vector<int>{1,2,3,5}}, // DEFUALT STAND
-        {1, std::vector<int>{0,2,3,5}}, // FORCED STAND
-        {2, std::vector<int>{0,1,3,5}}, // VELOCITY WALKING
-        {3, std::vector<int>{0,1,2,5}}, // RUNNING MODE?
-        // {4, std::vector<int>()}, // PATH FOLLOWING?
-        {5, std::vector<int>{6,7}}, // STAND DOWN
-        {6, std::vector<int>{0,1,2,3,5}}, // STAND UP
-        {7, std::vector<int>(6)}, // DAMPING MODE
-        // {9, std::vector<int>()}, // RECOVERY STAND
-    };
-
     // * Other variables
-    rclcpp::Time t_, t_prev_, t_timer_, t_mode_timer_;
-    bool timer_on_ = false;
+    rclcpp::Time t_, t_prev_, t_timer_, t_cmd_vel_, t_cmd_orient_;
+    bool timer_on_, cmd_vel_active_, cmd_orient_active_ = false;
+    std::mutex stand_mtx_;
 
     // * ROS 2 State Publisher
     /**
@@ -174,6 +163,14 @@ private:
     void cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg);
 
     /**
+     * @brief Callback used for setting robot orientation
+     * 
+     * @param msg [geometry_msgs/Vector3] roll pitch yaw angle references.
+     * roll range: [-0.3, 0.3], pitch range: [-0.3, 0.3], yaw range: [-0.6, 0.6]
+     */
+    void cmdBodyOrientationCallback(const geometry_msgs::msg::Vector3::SharedPtr msg);
+
+    /**
      * @brief callback used to power off the robot when it is in crouched position
      */
     bool powerOffCallback(
@@ -188,6 +185,22 @@ private:
         std::shared_ptr<std_srvs::srv::Trigger::Request> req, 
         std::shared_ptr<std_srvs::srv::Trigger::Response> res
     );
+
+    /**
+     * @brief Callback used for standing up the robot
+     */
+    bool standUpCallback(
+        std::shared_ptr<std_srvs::srv::Trigger::Request> req, 
+        std::shared_ptr<std_srvs::srv::Trigger::Response> res
+    );
+
+    /**
+     * @brief Callback used for standing down the robot
+     */
+    bool standDownCallback(
+        std::shared_ptr<std_srvs::srv::Trigger::Request> req, 
+        std::shared_ptr<std_srvs::srv::Trigger::Response> res
+    );
     
     /**
      * @brief battery state callback to check current robot battery state
@@ -198,43 +211,11 @@ private:
     );
 
     /**
-     * @brief Callback used for setting robot mode, e.g. stand up, stand down, walk, etc
-     */
-    bool setRobotModeCallback(
-        std::shared_ptr<ros2_unitree_legged_msgs::srv::SetInt::Request> req, 
-        std::shared_ptr<ros2_unitree_legged_msgs::srv::SetInt::Response> res
-    );
-
-    /**
      * @brief Callback used for getting robot mode, e.g. stand up, stand down, walk, etc
      */
     bool getRobotModeCallback(
         std::shared_ptr<ros2_unitree_legged_msgs::srv::GetInt::Request> /* req */, 
         std::shared_ptr<ros2_unitree_legged_msgs::srv::GetInt::Response> res
-    );
-    
-    /**
-     * @brief Callback used for setting robot gate type, e.g. trot, trot running, staris climb, etc
-     */
-    bool setGateTypeCallback(
-        std::shared_ptr<ros2_unitree_legged_msgs::srv::SetInt::Request> req, 
-        std::shared_ptr<ros2_unitree_legged_msgs::srv::SetInt::Response> res
-    );
-
-    /**
-     * @brief Callback used for getting robot gate type, e.g. trot, trot running, staris climb, etc
-     */
-    bool getGateTypeCallback(
-        std::shared_ptr<ros2_unitree_legged_msgs::srv::GetInt::Request> /* req */, 
-        std::shared_ptr<ros2_unitree_legged_msgs::srv::GetInt::Response> res
-    );
-
-    /**
-     * @brief Callback used for setting robot speed level, e.g. normal, fast, etc
-     */
-    bool setSpeedLevelCallback(
-        std::shared_ptr<ros2_unitree_legged_msgs::srv::SetInt::Request> req, 
-        std::shared_ptr<ros2_unitree_legged_msgs::srv::SetInt::Response> res
     );
 
     /**
@@ -267,17 +248,6 @@ private:
     bool getBodyHeightCallback(
         std::shared_ptr<ros2_unitree_legged_msgs::srv::GetFloat::Request> /* req */,
         std::shared_ptr<ros2_unitree_legged_msgs::srv::GetFloat::Response> res
-    );
-
-    /**
-     * @brief Callback used for setting robot speed level, e.g. normal, fast, etc
-     * 
-     * @param ros2_unitree_legged_msgs/SetBodyOrientation roll pitch yaw angle references. 
-     * roll range: [-0.3, 0.3], pitch range: [-0.3, 0.3], yaw range: [-0.6, 0.6]
-     */
-    bool setBodyOrientationCallback(
-        std::shared_ptr<ros2_unitree_legged_msgs::srv::SetBodyOrientation::Request> req, 
-        std::shared_ptr<ros2_unitree_legged_msgs::srv::SetBodyOrientation::Response> res
     );
 
 
