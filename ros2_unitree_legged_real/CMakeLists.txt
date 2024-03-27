@@ -61,7 +61,7 @@ install(TARGETS
 )
 
 install(
-  TARGETS unitree_service_handler
+  TARGETS unitree_ros2_client
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION lib
