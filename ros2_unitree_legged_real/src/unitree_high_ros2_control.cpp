@@ -200,6 +200,7 @@ void UnitreeRos2HighController::highStatePublisher()
         memcpy(&custom_->keyData, &custom_->high_state.wirelessRemote[0], 40); 
     }
     
+    t_prev_ = t_;
 }
 
 void UnitreeRos2HighController::cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
