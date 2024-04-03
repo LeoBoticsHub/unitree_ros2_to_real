@@ -74,7 +74,7 @@ public:
     bool emergencyStop();
 
     /**
-     * @brief Stand up servie interface
+     * @brief Stand up service interface
      * 
      * @return true if the robot stands up
      * @return false otherwise
@@ -82,7 +82,7 @@ public:
     bool standUp();
 
     /**
-     * @brief Stand Down servie interface
+     * @brief Stand Down service interface
      * 
      * @return true if the robot stands down
      * @return false otherwise
@@ -106,7 +106,7 @@ public:
     /**
      * @brief set foot height service interface
      * 
-     * @param height the heigth delta value to add to the current foot height
+     * @param height the height delta value to add to the current foot height
      * @return true if the delta height is added
      * @return false otherwise
      */
