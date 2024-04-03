@@ -49,7 +49,7 @@ void UnitreeRos2HighController::init_class()
             this, std::placeholders::_1, std::placeholders::_2
         )
     );
-    emergency_button_srv_ = this->create_service<std_srvs::srv::Trigger>("power_off",                 
+    emergency_button_srv_ = this->create_service<std_srvs::srv::Trigger>("emergency_stop",                 
         std::bind(&UnitreeRos2HighController::emergencyStopCallback,
             this, std::placeholders::_1, std::placeholders::_2
         )
