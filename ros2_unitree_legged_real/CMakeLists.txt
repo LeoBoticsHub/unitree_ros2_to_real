@@ -25,6 +25,10 @@ set(EXTRA_LIBS -pthread unitree_legged_sdk)
 
 set(CMAKE_CXX_FLAGS "-O3")
 
+# Install Python modules
+find_package(ament_cmake_python REQUIRED)
+ament_python_install_package(${PROJECT_NAME})
+
 ament_export_include_directories(include)
 ament_export_libraries(unitree_service_handler)
 
