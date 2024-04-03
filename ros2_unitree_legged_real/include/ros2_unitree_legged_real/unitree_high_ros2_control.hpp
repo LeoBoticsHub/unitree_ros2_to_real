@@ -146,6 +146,8 @@ private:
     bool timer_on_, cmd_vel_active_, cmd_orient_active_ = false;
     std::mutex stand_mtx_;
 
+    std::shared_ptr<LoopFunc> loop_StatePub_, loop_udpSend_, loop_udpRecv_;
+
     // * ROS 2 State Publisher
     /**
      * @brief This function reads the Robot high state values from an UDP message (joint states, imu, odom, wirless remote) and publish them on ros messages

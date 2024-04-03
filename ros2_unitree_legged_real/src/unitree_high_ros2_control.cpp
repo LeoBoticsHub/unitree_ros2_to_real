@@ -7,7 +7,6 @@
 UnitreeRos2HighController::UnitreeRos2HighController():
     Node("unitree_ros2_high_controller")
 {   
-    // TODO check if loop work with custom inside (eg using mem_fn in boost:bind) or move it ourside
     custom_ = std::make_shared<Custom>();
 }
 
@@ -95,16 +94,16 @@ void UnitreeRos2HighController::init_class()
         )
     );
 
-    // * High state UDP loop function
-    LoopFunc loop_udpSend("high_udp_send", 0.002, 3, boost::bind(&Custom::highUdpSend, &*custom_));
-    LoopFunc loop_udpRecv("high_udp_recv", 0.002, 3, boost::bind(&Custom::highUdpRecv, &*custom_));
+    // High state UDP loop function
+    loop_udpSend_ = std::make_shared<LoopFunc>("high_udp_send", 0.002, 3, boost::bind(&Custom::highUdpSend, &*custom_));
+    loop_udpRecv_ = std::make_shared<LoopFunc>("high_udp_recv", 0.002, 3, boost::bind(&Custom::highUdpRecv, &*custom_));
 
     // * State publisher loop function
-    LoopFunc loop_StatePub("high_state_pub", 0.0025, 3, boost::bind(&UnitreeRos2HighController::highStatePublisher, this));
+    loop_StatePub_ = std::make_shared<LoopFunc>("high_state_pub", 0.0025, 3, boost::bind(&UnitreeRos2HighController::highStatePublisher, this));
 
-    loop_udpSend.start();
-    loop_udpRecv.start();
-    loop_StatePub.start();
+    loop_udpSend_->start();
+    loop_udpRecv_->start();
+    loop_StatePub_->start();
 
     printf("HIGHLEVEL is initialized\n");
 }
@@ -484,6 +483,8 @@ bool UnitreeRos2HighController::getBodyHeightCallback(
 int main(int argc, char * argv[])
 {
     rclcpp::init(argc, argv);
+
+    // Initialize ros 2 interface object
     auto node{std::make_shared<UnitreeRos2HighController>()};
     node->init_class();
 
