@@ -45,6 +45,23 @@ To simplify interaction with the services spawn by `unitree_high_ros2_control` n
 
 * See [unitreeRos2Client.py](ros2_unitree_legged_real/ros2_unitree_legged_real/unitreeRos2Client.py) for the python version
 
+## Testing
+
+To test the functionalities of ```unitree_high_ros2_control``` node we provided a quick reference test to run.
+Start by running the B1 ROS2 controllor on the robot or your PC (Be sure that robot and host pc are on the same network or correctly connected):
+
+```bash
+    ros2 run ros2_unitree_legged_real unitree_high_ros2_control
+```
+
+Once the controller is started, move the robot in stand down position (L2+A on controller) and start the test procedure on your host pc. Open a terminal in ```ros2_unitree_legged_real/test``` and run the test:
+
+```bash
+    python test_ros2control.py
+```
+
+It will produce a recap of the test named ```test_recap_DATE_TIME``` where the succesfull and unsuccesful tests are reported.
+
 ## OLD README VERSION
 
 The original README.md version can be found here: [OLD_README](old_readme.md)
