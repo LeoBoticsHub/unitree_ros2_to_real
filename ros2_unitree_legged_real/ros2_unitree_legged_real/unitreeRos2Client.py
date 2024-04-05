@@ -39,12 +39,10 @@ class UnitreeRos2Client:
         """
         req = Trigger.Request()
         future = self.power_off_srv.call_async(req)
-        rclpy.spin_until_future_complete(self, future)
+        rclpy.spin_until_future_complete(self.node, future)
 
         res: Trigger.Response
         res = future.result()
-        if not res.success:
-            self.node.get_logger().error(res.message)
 
         return res.success
 
@@ -57,7 +55,7 @@ class UnitreeRos2Client:
         """
         req = Trigger.Request()
         future = self.emergency_button_srv.call_async(req)
-        rclpy.spin_until_future_complete(self, future)
+        rclpy.spin_until_future_complete(self.node, future)
 
         res: Trigger.Response
         res = future.result()
@@ -75,7 +73,7 @@ class UnitreeRos2Client:
         """
         req = Trigger.Request()
         future = self.stand_up_srv.call_async(req)
-        rclpy.spin_until_future_complete(self, future)
+        rclpy.spin_until_future_complete(self.node, future)
 
         res: Trigger.Response
         res = future.result()
@@ -93,7 +91,7 @@ class UnitreeRos2Client:
         """
         req = Trigger.Request()
         future = self.stand_down_srv.call_async(req)
-        rclpy.spin_until_future_complete(self, future)
+        rclpy.spin_until_future_complete(self.node, future)
 
         res: Trigger.Response
         res = future.result()
@@ -111,7 +109,7 @@ class UnitreeRos2Client:
         """
         req = GetInt.Request()
         future = self.get_mode_srv.call_async(req)
-        rclpy.spin_until_future_complete(self, future)
+        rclpy.spin_until_future_complete(self.node, future)
 
         res: GetInt.Response
         res = future.result()
@@ -129,7 +127,7 @@ class UnitreeRos2Client:
         """
         req = GetBatteryState.Request()
         future = self.battery_state_srv.call_async(req)
-        rclpy.spin_until_future_complete(self, future)
+        rclpy.spin_until_future_complete(self.node, future)
 
         res: GetBatteryState.Response
         res = future.result()
@@ -148,7 +146,7 @@ class UnitreeRos2Client:
         req = SetFloat.Request()
         req.value = height
         future = self.set_foot_height_srv.call_async(req)
-        rclpy.spin_until_future_complete(self, future)
+        rclpy.spin_until_future_complete(self.node, future)
 
         res: SetFloat.Response
         res = future.result()
@@ -169,7 +167,7 @@ class UnitreeRos2Client:
         """
         req = GetFloat.Request()
         future = self.get_foot_height_srv.call_async(req)
-        rclpy.spin_until_future_complete(self, future)
+        rclpy.spin_until_future_complete(self.node, future)
 
         res: GetFloat.Response
         res = future.result()
@@ -188,7 +186,7 @@ class UnitreeRos2Client:
         req = SetFloat.Request()
         req.value = height
         future = self.set_body_height_srv.call_async(req)
-        rclpy.spin_until_future_complete(self, future)
+        rclpy.spin_until_future_complete(self.node, future)
 
         res: SetFloat.Response
         res = future.result()
@@ -209,7 +207,7 @@ class UnitreeRos2Client:
         """
         req = GetFloat.Request()
         future = self.get_body_height_srv.call_async(req)
-        rclpy.spin_until_future_complete(self, future)
+        rclpy.spin_until_future_complete(self.node, future)
 
         res: GetFloat.Response
         res = future.result()
@@ -234,12 +232,12 @@ class UnitreeRos2Client:
 
 
     def pubCmdOrient(self, roll: float, pitch: float, yaw: float) -> None:
-        """The cmd_vel publisher interface
+        """The cmd_orient publisher interface
 
         Args:
-            vx: [float] the frontal linear velocity
-            vy: [float] the lateral linear velocity
-            w: [float] the angular velocity
+            roll: [float] the roll delta angle angle
+            pitch: [float] the pitch delta angle angle
+            yaw: [float] the yaw delta angle angle
         """
         cmd_orient = Vector3()
         cmd_orient.x = roll
