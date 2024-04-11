@@ -13,14 +13,6 @@ import os
 
 def generate_launch_description():
 
-    # Args
-    use_rviz = LaunchConfiguration('use_rviz')
-
-    DeclareLaunchArgument(
-        'use_rviz',
-        default_value='False'
-    )
-
     ros2_control = Node(
         package='ros2_unitree_legged_real',
         executable='unitree_high_ros2_control',
