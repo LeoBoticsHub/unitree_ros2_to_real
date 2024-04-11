@@ -17,7 +17,10 @@ def generate_launch_description():
 
     b1_description = get_package_share_directory('b1_description')
     upload_launch = TimerAction(period=1.0, actions=[IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(b1_description + '/launch/upload.launch.py')
+        PythonLaunchDescriptionSource(b1_description + '/launch/upload.launch.py'), 
+        launch_arguments = {
+            'use_rviz': 'false'
+        }.items()
     )])
     
     return LaunchDescription([ros2_control, upload_launch])
