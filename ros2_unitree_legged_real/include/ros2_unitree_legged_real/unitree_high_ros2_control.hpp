@@ -145,6 +145,7 @@ private:
     rclcpp::Time t_, t_prev_, t_timer_, t_cmd_vel_, t_cmd_orient_;
     bool timer_on_, cmd_vel_active_, cmd_orient_active_ = false;
     std::mutex stand_mtx_;
+    bool publish_odom_tf_;
 
     std::shared_ptr<LoopFunc> loop_StatePub_, loop_udpSend_, loop_udpRecv_;
 

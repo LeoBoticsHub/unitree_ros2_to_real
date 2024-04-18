@@ -26,6 +26,10 @@ void UnitreeRos2HighController::init_class()
     t_ = t_prev_ = t_timer_ = t_cmd_orient_ = t_cmd_vel_ = this->get_clock()->now();
     timer_on_ = false;
 
+    // * Read ros params
+    this->declare_parameter<bool>("publish_odom_tf", false);
+    this->get_parameter("publish_odom_tf", publish_odom_tf_);
+
     // * Subscribers
     cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
         "cmd_vel", 1,
@@ -183,17 +187,20 @@ void UnitreeRos2HighController::highStatePublisher()
 	    // odom_msg_.twist.twist.angular        = imu_msg_.angular_velocity;
 
         // odom -> base_link
-        // odom_H_trunk_.header.stamp = t_;
-        // odom_H_trunk_.transform.translation.x       = static_cast<double>(custom_->high_state.position[0]);
-	    // odom_H_trunk_.transform.translation.y       = static_cast<double>(custom_->high_state.position[1]);
-	    // odom_H_trunk_.transform.translation.z       = static_cast<double>(custom_->high_state.position[2]);
-	    // odom_H_trunk_.transform.rotation            = imu_msg_.orientation;
-        
+        if (publish_odom_tf_)
+        {
+            odom_H_trunk_.header.stamp = t_;
+            odom_H_trunk_.transform.translation.x       = static_cast<double>(custom_->high_state.position[0]);
+            odom_H_trunk_.transform.translation.y       = static_cast<double>(custom_->high_state.position[1]);
+            odom_H_trunk_.transform.translation.z       = static_cast<double>(custom_->high_state.position[2]);
+            odom_H_trunk_.transform.rotation            = imu_msg_.orientation;
+            tf_pub_->sendTransform(odom_H_trunk_);
+        }
+
         // publish state messages
         joint_states_pub_->publish(joint_state_msg_);
         imu_pub_->publish(imu_msg_);
         odom_pub_->publish(odom_msg_);
-        // tf_pub_->sendTransform(odom_H_trunk_);
 
         // check wirless remote received commands (used to bypass ros cmd_vel if needed)
         memcpy(&custom_->keyData, &custom_->high_state.wirelessRemote[0], 40); 

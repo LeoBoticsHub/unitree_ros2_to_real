@@ -30,7 +30,7 @@ find_package(ament_cmake_python REQUIRED)
 ament_python_install_package(${PROJECT_NAME})
 
 ament_export_include_directories(include)
-ament_export_libraries(unitree_service_handler)
+ament_export_libraries(unitree_ros2_client)
 
 ament_package()
 
