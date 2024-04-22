@@ -37,6 +37,20 @@ To run the high level B1 controller, bash the workspace and run the following:
     ros2 run ros2_unitree_legged_real unitree_high_ros2_control
 ```
 
+### Docker image
+
+If you want to run the controller directly on the B1 main computer, use connect to main computer and run:
+
+```bash
+docker_factory_run -i b1/ros2_control
+```
+
+or, if you use [robot_setup](https://github.com/LeoBoticsHub/robots_setup) bashrcs, from your pilot laptop,
+
+```bash
+launch_ros2_control
+```
+
 ## Unitree ROS 2 client interface
 
 To simplify interaction with the services spawn by `unitree_high_ros2_control` node, we provided c++ and python libraries containing the class `UnitreeRos2Client` which provide a easy to use interface with ros services.
