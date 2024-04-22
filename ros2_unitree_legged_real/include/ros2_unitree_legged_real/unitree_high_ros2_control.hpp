@@ -124,6 +124,8 @@ private:
     const std::string BASE_LINK_NAME{"trunk"};
     const std::string IMU_NAME{"imu_link"};
     const std::string ODOM_NAME{"odom"};
+    double initial_body_height_;
+    std::array<float, 3UL> initial_position_;
 
     // * Joint variables
     const std::array<unsigned int, 12> b1_motor_idxs

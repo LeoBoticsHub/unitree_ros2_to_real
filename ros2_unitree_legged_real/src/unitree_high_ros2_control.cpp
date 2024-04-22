@@ -109,6 +109,11 @@ void UnitreeRos2HighController::init_class()
     loop_udpRecv_->start();
     loop_StatePub_->start();
 
+    // * initialize first body height for odom tf
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    initial_body_height_ = custom_->high_state.bodyHeight;
+    initial_position_ = custom_->high_state.position;
+
     printf("HIGHLEVEL is initialized\n");
 }
 
@@ -177,9 +182,9 @@ void UnitreeRos2HighController::highStatePublisher()
 	    odom_msg_.header.stamp = t_;
 	    odom_msg_.header.frame_id            = ODOM_NAME;
 	    odom_msg_.child_frame_id             = BASE_LINK_NAME;
-	    odom_msg_.pose.pose.position.x       = static_cast<double>(custom_->high_state.position[0]);
-	    odom_msg_.pose.pose.position.y       = static_cast<double>(custom_->high_state.position[1]);
-	    odom_msg_.pose.pose.position.z       = static_cast<double>(custom_->high_state.position[2]);
+	    odom_msg_.pose.pose.position.x       = static_cast<double>(custom_->high_state.position[0]) - initial_position_[0];
+	    odom_msg_.pose.pose.position.y       = static_cast<double>(custom_->high_state.position[1]) - initial_position_[1];
+	    odom_msg_.pose.pose.position.z       = static_cast<double>(custom_->high_state.position[2]) - initial_position_[2] + initial_body_height_;
 	    // odom_msg_.pose.pose.orientation      = imu_msg_.orientation;
 	    odom_msg_.twist.twist.linear.x       = static_cast<double>(custom_->high_state.velocity[0]);
 	    odom_msg_.twist.twist.linear.y       = static_cast<double>(custom_->high_state.velocity[1]);
@@ -190,9 +195,9 @@ void UnitreeRos2HighController::highStatePublisher()
         if (publish_odom_tf_)
         {
             odom_H_trunk_.header.stamp = t_;
-            odom_H_trunk_.transform.translation.x       = static_cast<double>(custom_->high_state.position[0]);
-            odom_H_trunk_.transform.translation.y       = static_cast<double>(custom_->high_state.position[1]);
-            odom_H_trunk_.transform.translation.z       = static_cast<double>(custom_->high_state.position[2]);
+            odom_H_trunk_.transform.translation.x       = static_cast<double>(custom_->high_state.position[0]) - initial_position_[0]; 
+            odom_H_trunk_.transform.translation.y       = static_cast<double>(custom_->high_state.position[1]) - initial_position_[1];
+            odom_H_trunk_.transform.translation.z       = static_cast<double>(custom_->high_state.position[2]) - initial_position_[2] + initial_body_height_;
             odom_H_trunk_.transform.rotation            = imu_msg_.orientation;
             tf_pub_->sendTransform(odom_H_trunk_);
         }
