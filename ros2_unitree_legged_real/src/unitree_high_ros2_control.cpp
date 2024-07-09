@@ -67,6 +67,11 @@ void UnitreeRos2HighController::init_class()
             this, std::placeholders::_1, std::placeholders::_2
         )
     );
+    reset_odom_srv_ = this->create_service<std_srvs::srv::Trigger>("reset_odometry",                 
+        std::bind(&UnitreeRos2HighController::resetOdometryCallback,
+            this, std::placeholders::_1, std::placeholders::_2
+        )
+    );
     get_mode_srv_ = this->create_service<ros2_unitree_legged_msgs::srv::GetInt>("get_robot_mode",                 
         std::bind(&UnitreeRos2HighController::getRobotModeCallback,
             this, std::placeholders::_1, std::placeholders::_2
@@ -417,6 +422,19 @@ bool UnitreeRos2HighController::standDownCallback(
 
     return true;
 }
+
+
+bool UnitreeRos2HighController::resetOdometryCallback(
+    std::shared_ptr<std_srvs::srv::Trigger::Request> req, 
+    std::shared_ptr<std_srvs::srv::Trigger::Response> res
+)
+{
+    initial_body_height_ = custom_->high_state.bodyHeight;
+    initial_position_ = custom_->high_state.position;
+
+    return true;
+}
+
 
 bool UnitreeRos2HighController::getRobotModeCallback(
     std::shared_ptr<ros2_unitree_legged_msgs::srv::GetInt::Request> /* req */, 

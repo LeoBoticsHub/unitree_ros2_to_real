@@ -105,6 +105,7 @@ private:
     rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr emergency_button_srv_;
     rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stand_up_srv_;
     rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stand_down_srv_;
+    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr reset_odom_srv_;
     rclcpp::Service<ros2_unitree_legged_msgs::srv::GetInt>::SharedPtr get_mode_srv_;
     rclcpp::Service<ros2_unitree_legged_msgs::srv::GetBatteryState>::SharedPtr battery_state_srv_;
     rclcpp::Service<ros2_unitree_legged_msgs::srv::SetFloat>::SharedPtr set_foot_height_srv_;
@@ -203,6 +204,14 @@ private:
      * @brief Callback used for standing down the robot
      */
     bool standDownCallback(
+        std::shared_ptr<std_srvs::srv::Trigger::Request> req, 
+        std::shared_ptr<std_srvs::srv::Trigger::Response> res
+    );
+
+    /**
+     * @brief Callback used for resetting odometry on robot base link
+     */
+    bool resetOdometryCallback(
         std::shared_ptr<std_srvs::srv::Trigger::Request> req, 
         std::shared_ptr<std_srvs::srv::Trigger::Response> res
     );
