@@ -190,11 +190,11 @@ void UnitreeRos2HighController::highStatePublisher()
 	    odom_msg_.pose.pose.position.x       = static_cast<double>(custom_->high_state.position[0]) - initial_position_[0];
 	    odom_msg_.pose.pose.position.y       = static_cast<double>(custom_->high_state.position[1]) - initial_position_[1];
 	    odom_msg_.pose.pose.position.z       = static_cast<double>(custom_->high_state.position[2]) - initial_position_[2] + initial_body_height_;
-	    // odom_msg_.pose.pose.orientation      = imu_msg_.orientation;
+	    odom_msg_.pose.pose.orientation      = imu_msg_.orientation;
 	    odom_msg_.twist.twist.linear.x       = static_cast<double>(custom_->high_state.velocity[0]);
 	    odom_msg_.twist.twist.linear.y       = static_cast<double>(custom_->high_state.velocity[1]);
 	    odom_msg_.twist.twist.linear.z       = static_cast<double>(custom_->high_state.velocity[2]);
-	    // odom_msg_.twist.twist.angular        = imu_msg_.angular_velocity;
+	    odom_msg_.twist.twist.angular        = imu_msg_.angular_velocity;
 
         // odom -> base_link
         if (publish_odom_tf_)
