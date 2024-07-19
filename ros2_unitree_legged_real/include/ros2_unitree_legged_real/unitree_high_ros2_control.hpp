@@ -49,8 +49,8 @@ public:
 
     using SharedPtr = std::shared_ptr<Custom>; 
 
-    Custom(): 
-        high_udp(8090, "192.168.123.220", 8082, sizeof(HighCmd), sizeof(HighState))
+    Custom(const char* robot_ip): 
+        high_udp(8090, robot_ip, 8082, sizeof(HighCmd), sizeof(HighState))
     {
         high_udp.InitCmdData(high_cmd);
     }
@@ -150,6 +150,7 @@ private:
     bool timer_on_, cmd_vel_active_, cmd_orient_active_ = false;
     std::mutex stand_mtx_;
     bool publish_odom_tf_;
+    std::string robot_name_;
 
     std::shared_ptr<LoopFunc> loop_StatePub_, loop_udpSend_, loop_udpRecv_;
 

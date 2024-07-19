@@ -7,7 +7,31 @@
 UnitreeRos2HighController::UnitreeRos2HighController():
     Node("unitree_ros2_high_controller")
 {   
-    custom_ = std::make_shared<Custom>();
+    this->declare_parameter<std::string>("robot_name", "");
+    this->get_parameter("robot_name", robot_name_);
+
+    RCLCPP_ERROR(this->get_logger(), "%d", robot_name_.compare("b1"));
+
+    // select the correct robot ip depending on robot name
+    std::string robot_ip{};
+    if (robot_name_.compare("go1") == 0)
+    {
+        robot_ip = "192.168.12.1";
+    }
+    else if (robot_name_.compare("b1") == 0)
+    {
+        robot_ip = "192.168.123.220";
+    }
+    else
+    {
+        RCLCPP_ERROR(this->get_logger(), "Select a correct robot name between b1 and go1.");
+        exit(1);
+    }
+
+    RCLCPP_ERROR(this->get_logger(), robot_ip.c_str());
+
+
+    custom_ = std::make_shared<Custom>(robot_ip.c_str());
 }
 
 void UnitreeRos2HighController::init_class()
