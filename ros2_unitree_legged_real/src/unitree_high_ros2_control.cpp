@@ -438,6 +438,11 @@ bool UnitreeRos2HighController::standDownCallback(
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         custom_->high_cmd.mode = 5;
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        if (robot_name_.compare("go1") == 0)
+        {
+            custom_->high_cmd.mode = 7;
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }        
         custom_->high_cmd.mode = 0;
 
         res->success = true;
