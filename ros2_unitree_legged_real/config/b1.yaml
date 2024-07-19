@@ -1,0 +1,11 @@
+unitree_high_ros2_control:
+  ros__parameters:
+    udp_loop_time: 0.002
+    state_pub_loop_time: 0.0025
+    euler_x_bound: 0.3
+    euler_y_bound: 0.3
+    euler_z_bound: 0.6
+    foot_height_lower_bound: -0.1
+    foot_height_upper_bound: 0.15
+    body_height_lower_bound: -0.1
+    body_height_upper_bound: 0.15
