@@ -5,12 +5,34 @@
 #include "ros2_unitree_legged_real/unitree_high_ros2_control.hpp"
 
 UnitreeRos2HighController::UnitreeRos2HighController():
-    Node("unitree_ros2_high_controller")
+    Node("unitree_high_ros2_control")
 {   
+    // read ros parameters
     this->declare_parameter<std::string>("robot_name", "");
-    this->get_parameter("robot_name", robot_name_);
+    this->declare_parameter<double>("udp_loop_time", 0.0);
+    this->declare_parameter<double>("state_pub_loop_time", 0.0);
+    this->declare_parameter<double>("euler_x_bound", 0.0);
+    this->declare_parameter<double>("euler_y_bound", 0.0);
+    this->declare_parameter<double>("euler_z_bound", 0.0);
+    this->declare_parameter<double>("foot_height_lower_bound", 0.0);
+    this->declare_parameter<double>("foot_height_upper_bound", 0.0);
+    this->declare_parameter<double>("body_height_lower_bound", 0.0);
+    this->declare_parameter<double>("body_height_upper_bound", 0.0);
 
-    RCLCPP_ERROR(this->get_logger(), "%d", robot_name_.compare("b1"));
+    this->get_parameter("robot_name", robot_name_);
+    this->get_parameter("udp_loop_time", udp_loop_time_);
+    this->get_parameter("state_pub_loop_time", state_pub_loop_time_);
+    this->get_parameter("euler_x_bound", euler_x_bound_);
+    this->get_parameter("euler_y_bound", euler_y_bound_);
+    this->get_parameter("euler_z_bound", euler_z_bound_);
+    this->get_parameter("foot_height_lower_bound", foot_height_lower_bound_);
+    this->get_parameter("foot_height_upper_bound", foot_height_upper_bound_);
+    this->get_parameter("body_height_lower_bound", body_height_lower_bound_);
+    this->get_parameter("body_height_upper_bound", body_height_upper_bound_);
+
+    RCLCPP_ERROR(this->get_logger(), robot_name_.c_str());
+    RCLCPP_ERROR(this->get_logger(), "%.3f", euler_x_bound_);
+    RCLCPP_ERROR(this->get_logger(), "%.3f", foot_height_lower_bound_);
 
     // select the correct robot ip depending on robot name
     std::string robot_ip{};
@@ -27,9 +49,6 @@ UnitreeRos2HighController::UnitreeRos2HighController():
         RCLCPP_ERROR(this->get_logger(), "Select a correct robot name between b1 and go1.");
         exit(1);
     }
-
-    RCLCPP_ERROR(this->get_logger(), robot_ip.c_str());
-
 
     custom_ = std::make_shared<Custom>(robot_ip.c_str());
 }
@@ -133,11 +152,11 @@ void UnitreeRos2HighController::init_class()
     );
 
     // High state UDP loop function
-    loop_udpSend_ = std::make_shared<LoopFunc>("high_udp_send", 0.002, 3, boost::bind(&Custom::highUdpSend, &*custom_));
-    loop_udpRecv_ = std::make_shared<LoopFunc>("high_udp_recv", 0.002, 3, boost::bind(&Custom::highUdpRecv, &*custom_));
+    loop_udpSend_ = std::make_shared<LoopFunc>("high_udp_send", udp_loop_time_, 3, boost::bind(&Custom::highUdpSend, &*custom_));
+    loop_udpRecv_ = std::make_shared<LoopFunc>("high_udp_recv", udp_loop_time_, 3, boost::bind(&Custom::highUdpRecv, &*custom_));
 
     // * State publisher loop function
-    loop_StatePub_ = std::make_shared<LoopFunc>("high_state_pub", 0.0025, 3, boost::bind(&UnitreeRos2HighController::highStatePublisher, this));
+    loop_StatePub_ = std::make_shared<LoopFunc>("high_state_pub", state_pub_loop_time_, 3, boost::bind(&UnitreeRos2HighController::highStatePublisher, this));
 
     loop_udpSend_->start();
     loop_udpRecv_->start();
@@ -295,9 +314,9 @@ void UnitreeRos2HighController::cmdBodyOrientationCallback(const geometry_msgs::
     {
         if (!cmd_vel_active_ &&
             (timer_on_ && (t_ - t_timer_).seconds() >= 5 || !timer_on_) &&
-            msg->x >= -0.3 && msg->x <= 0.3 &&
-            msg->y >= -0.3 && msg->y <= 0.3 &&
-            msg->z >= -0.6 && msg->z <= 0.6
+            msg->x >= -euler_x_bound_ && msg->x <= euler_x_bound_ &&
+            msg->y >= -euler_y_bound_ && msg->y <= euler_y_bound_ &&
+            msg->z >= -euler_z_bound_ && msg->z <= euler_z_bound_
         )
         {
             custom_->high_cmd.mode = 1;
@@ -499,7 +518,7 @@ bool UnitreeRos2HighController::setFootHeightCallback(
 )
 {
     // check if the request is in the allowed delta bounds
-    if (req->value >= -0.1 && req->value <= 0.15)
+    if (req->value >= foot_height_lower_bound_ && req->value <= foot_height_upper_bound_)
     {
         custom_->high_cmd.footRaiseHeight = req->value;
         res->success = true;
@@ -531,7 +550,7 @@ bool UnitreeRos2HighController::setBodyHeightCallback(
 )
 {
     // check if the request is in the allowed delta bounds
-    if (req->value >= -0.16 && req->value <= 0.16)
+    if (req->value >= body_height_lower_bound_ && req->value <= body_height_upper_bound_)
     {
         custom_->high_cmd.bodyHeight = req->value;
         res->success = true;
