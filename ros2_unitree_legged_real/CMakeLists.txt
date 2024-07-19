@@ -19,7 +19,14 @@ include_directories(
     include
 )
 
-link_directories(/usr/local/lib/libunitree_legged_sdk.so)
+option(USE_STATIC_LIBRARY "decide whether the unitree library is static of shared." OFF)
+
+set(LIBRARY_EXTENSION .so)  
+if(USE_STATIC_LIBRARY)
+    set(LIBRARY_EXTENSION .a)
+endif(USE_STATIC_LIBRARY)
+
+link_directories(/usr/local/lib/libunitree_legged_sdk${LIBRARY_EXTENSION})
 
 set(EXTRA_LIBS -pthread unitree_legged_sdk)
 
