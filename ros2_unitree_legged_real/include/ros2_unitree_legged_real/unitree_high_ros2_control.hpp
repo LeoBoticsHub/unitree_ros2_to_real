@@ -32,6 +32,7 @@
 
 using namespace UNITREE_LEGGED_SDK;
 
+
 /**
  * @brief Custom unitree class for connecting via UDP to the robot controller
  */
@@ -79,6 +80,17 @@ double avg(T* vect, unsigned int size)
         res = res + vect[i];
     return res/size;
 }
+
+// enum for robot state modalities
+enum class ROBOT_STATE
+{
+    IDLE = 0, // 0. idle, default stand
+    FORCE_STAND = 1, // 1. force stand (controlled by dBodyHeight + ypr)
+    TARGET_VEL = 2, // 2. target velocity walking (controlled by velocity + yawSpeed)
+    STAND_DOWN = 5, // 5. position stand down.
+    STAND_UP = 6, // 6. position stand up
+    DAMPING = 7 // 7. damping mode
+};
 
 /**
  * @brief UnitreeRos2HighController ros2 node class for managing services, subscriber and publisher

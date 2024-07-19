@@ -175,31 +175,31 @@ void UnitreeRos2HighController::highStatePublisher()
     t_ = this->get_clock()->now();
 
     // zero cmd vel if no command are received 
-    if ((t_ - t_cmd_vel_).seconds() > 1 && custom_->high_state.mode != 7 && cmd_vel_active_)
+    if ((t_ - t_cmd_vel_).seconds() > 1 && custom_->high_state.mode != static_cast<uint8_t>(ROBOT_STATE::DAMPING) && cmd_vel_active_)
     {
-        custom_->high_cmd.mode = 2;
+        custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::TARGET_VEL);
         custom_->high_cmd.velocity[0] = 0;
         custom_->high_cmd.velocity[1] = 0;
         custom_->high_cmd.yawSpeed = 0;
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        custom_->high_cmd.mode = 0;
+        custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::IDLE);
         cmd_vel_active_ = false;
     }
 
     // zero cmd vel if no command are received 
-    if ((t_ - t_cmd_orient_).seconds() > 1 && custom_->high_state.mode != 7 && cmd_orient_active_)
+    if ((t_ - t_cmd_orient_).seconds() > 1 && custom_->high_state.mode != static_cast<uint8_t>(ROBOT_STATE::DAMPING) && cmd_orient_active_)
     {
-        custom_->high_cmd.mode = 1;
+        custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::FORCE_STAND);
         custom_->high_cmd.euler[0] = 0;
         custom_->high_cmd.euler[1] = 0;
         custom_->high_cmd.euler[2] = 0;
         std::this_thread::sleep_for(std::chrono::milliseconds(1200));
-        custom_->high_cmd.mode = 2;
+        custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::TARGET_VEL);
         custom_->high_cmd.velocity[0] = 0;
         custom_->high_cmd.velocity[1] = 0;
         custom_->high_cmd.yawSpeed = 0;
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        custom_->high_cmd.mode = 0;
+        custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::IDLE);
         cmd_orient_active_ = false;
     }
 
@@ -278,7 +278,7 @@ void UnitreeRos2HighController::cmdVelCallback(const geometry_msgs::msg::Twist::
         // check timer if previous wirless remote commands have been receives
         if(timer_on_ && (t_ - t_timer_).seconds() >= 5 || !timer_on_)
         {
-            custom_->high_cmd.mode = 2;
+            custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::TARGET_VEL);
             custom_->high_cmd.euler[0] = 0;
             custom_->high_cmd.euler[1] = 0;
             custom_->high_cmd.euler[2] = 0;
@@ -297,7 +297,7 @@ void UnitreeRos2HighController::cmdVelCallback(const geometry_msgs::msg::Twist::
         if(!timer_on_)
             timer_on_ = true;
         t_timer_ = this->get_clock()->now();
-        custom_->high_cmd.mode = 0;
+        custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::IDLE);
         custom_->high_cmd.velocity[0] = 0;
         custom_->high_cmd.velocity[1] = 0;
         custom_->high_cmd.yawSpeed = 0;
@@ -319,7 +319,7 @@ void UnitreeRos2HighController::cmdBodyOrientationCallback(const geometry_msgs::
             msg->z >= -euler_z_bound_ && msg->z <= euler_z_bound_
         )
         {
-            custom_->high_cmd.mode = 1;
+            custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::FORCE_STAND);
             custom_->high_cmd.euler[0] = msg->x;
             custom_->high_cmd.euler[1] = msg->y;
             custom_->high_cmd.euler[2] = msg->z;
@@ -338,7 +338,7 @@ void UnitreeRos2HighController::cmdBodyOrientationCallback(const geometry_msgs::
         if(!timer_on_)
             timer_on_ = true;
         t_timer_ = this->get_clock()->now();
-        custom_->high_cmd.mode = 0;
+        custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::IDLE);
         custom_->high_cmd.euler[0] = 0;
         custom_->high_cmd.euler[1] = 0;
         custom_->high_cmd.euler[2] = 0;
@@ -378,9 +378,9 @@ bool UnitreeRos2HighController::emergencyStopCallback(
     custom_->high_cmd.velocity[0] = 0;
     custom_->high_cmd.velocity[1] = 0;
     custom_->high_cmd.yawSpeed    = 0;
-    custom_->high_cmd.mode = 7;
+    custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::DAMPING);
     std::this_thread::sleep_for(std::chrono::milliseconds(1200));
-    custom_->high_cmd.mode = 0;
+    custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::IDLE);
 
     res->success = true;
     res->message = "Emergency Stop! Robot set in dumping mode.";
@@ -419,13 +419,13 @@ bool UnitreeRos2HighController::standUpCallback(
         custom_->high_cmd.velocity[1] = 0;
         custom_->high_cmd.yawSpeed    = 0;
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        custom_->high_cmd.mode = 6;
+        custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::STAND_UP);
         std::this_thread::sleep_for(std::chrono::milliseconds(2500));
-        custom_->high_cmd.mode = 1;
+        custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::FORCE_STAND);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        custom_->high_cmd.mode = 2;
+        custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::TARGET_VEL);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        custom_->high_cmd.mode = 0;
+        custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::IDLE);
 
         res->success = true;
         res->message = "Robot stand up completed.";
@@ -453,16 +453,16 @@ bool UnitreeRos2HighController::standDownCallback(
         custom_->high_cmd.velocity[0] = 0;
         custom_->high_cmd.velocity[1] = 0;
         custom_->high_cmd.yawSpeed    = 0;
-        custom_->high_cmd.mode = 6;
+        custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::STAND_UP);
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-        custom_->high_cmd.mode = 5;
+        custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::STAND_DOWN);
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         if (robot_name_.compare("go1") == 0)
         {
-            custom_->high_cmd.mode = 7;
+            custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::DAMPING);
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }        
-        custom_->high_cmd.mode = 0;
+        custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::IDLE);
 
         res->success = true;
         res->message = "Robot stand down completed.";
