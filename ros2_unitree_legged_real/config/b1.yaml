@@ -9,3 +9,7 @@ unitree_high_ros2_control:
     foot_height_upper_bound: 0.15
     body_height_lower_bound: -0.1
     body_height_upper_bound: 0.15
+    min_vx: -0.8
+    max_vx: 1.2
+    vy_bound: 0.25
+    w_bound: 0.75
