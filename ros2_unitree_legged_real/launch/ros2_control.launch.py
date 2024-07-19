@@ -18,15 +18,20 @@ def launch_setup(context, *args, **kwargs):
     # Convert robot name in python string
     robot_name = LaunchConfiguration('robot_type').perform(context)
 
+    # Launch ros2 control node
     ros2_control = Node(
         package='ros2_unitree_legged_real',
         executable='unitree_high_ros2_control',
         name='unitree_high_ros2_control',
         output='screen',
         parameters=[{'publish_odom_tf': LaunchConfiguration('publish_odom_tf'),
-                     'robot_name': robot_name}]
+                     'robot_name': robot_name},
+                     os.path.join(get_package_share_directory("ros2_unitree_legged_real"), 'config', robot_name + '.yaml')]
     )
 
+    print(os.path.join(get_package_share_directory("ros2_unitree_legged_real"), 'config', robot_name + '.yaml'))
+
+    # upload robot description for the robot state publisher
     robot_description = get_package_share_directory(robot_name + '_description')
     upload_launch = TimerAction(period=1.0, actions=[IncludeLaunchDescription(
         PythonLaunchDescriptionSource(robot_description + '/launch/upload.launch.py'), 
