@@ -81,7 +81,28 @@ double avg(T* vect, unsigned int size)
     return res/size;
 }
 
-// enum for robot state modalities
+/**
+ * @brief bound a value between its min and max values
+ * 
+ * @param value the value to bound
+ * @param min the lower bound
+ * @param max the upper bound
+ * @return double - the bounded value
+ */
+double bound(double value, double min, double max)
+{
+    if (value < min)
+        value = min;
+    else if (value > max)
+        value = max;
+
+    return value;
+}
+
+/**
+ * @brief enum class for robot state modalities
+ * 
+ */
 enum class ROBOT_STATE
 {
     IDLE = 0, // 0. idle, default stand
