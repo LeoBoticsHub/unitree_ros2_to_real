@@ -286,13 +286,14 @@ void UnitreeRos2HighController::cmdVelCallback(const geometry_msgs::msg::Twist::
         // check timer if previous wirless remote commands have been receives
         if(timer_on_ && (t_ - t_timer_).seconds() >= 5 || !timer_on_)
         {
+            // TODO check if setting gate type works for go1
             custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::TARGET_VEL);
             custom_->high_cmd.euler[0] = 0;
             custom_->high_cmd.euler[1] = 0;
             custom_->high_cmd.euler[2] = 0;
-            custom_->high_cmd.velocity[0] = msg->linear.x;
-            custom_->high_cmd.velocity[1] = msg->linear.y;
-            custom_->high_cmd.yawSpeed = msg->angular.z;
+            custom_->high_cmd.velocity[0] = bound(msg->linear.x, min_vx_, max_vx_);
+            custom_->high_cmd.velocity[1] = bound(msg->linear.y, -vy_bound_, vy_bound_);
+            custom_->high_cmd.yawSpeed = bound(msg->angular.z, -w_bound_, w_bound_);
   
             timer_on_ = false;
             cmd_vel_active_ = true;
@@ -321,16 +322,13 @@ void UnitreeRos2HighController::cmdBodyOrientationCallback(const geometry_msgs::
          std::abs(custom_->keyData.ly) < 0.1 )
     {
         if (!cmd_vel_active_ &&
-            (timer_on_ && (t_ - t_timer_).seconds() >= 5 || !timer_on_) &&
-            msg->x >= -euler_x_bound_ && msg->x <= euler_x_bound_ &&
-            msg->y >= -euler_y_bound_ && msg->y <= euler_y_bound_ &&
-            msg->z >= -euler_z_bound_ && msg->z <= euler_z_bound_
+            (timer_on_ && (t_ - t_timer_).seconds() >= 5 || !timer_on_)
         )
         {
             custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::FORCE_STAND);
-            custom_->high_cmd.euler[0] = msg->x;
-            custom_->high_cmd.euler[1] = msg->y;
-            custom_->high_cmd.euler[2] = msg->z;
+            custom_->high_cmd.euler[0] = bound(msg->x, -euler_x_bound_, euler_x_bound_);
+            custom_->high_cmd.euler[1] = bound(msg->y, -euler_y_bound_, euler_y_bound_);
+            custom_->high_cmd.euler[2] = bound(msg->z, -euler_z_bound_, euler_z_bound_);
             custom_->high_cmd.velocity[0] = 0;
             custom_->high_cmd.velocity[1] = 0;
             custom_->high_cmd.yawSpeed    = 0;
@@ -536,7 +534,7 @@ bool UnitreeRos2HighController::setFootHeightCallback(
     {
         res->success = false;
         res->message = "Error! Invalid foot height delta! \
-        Please provide a delta in the range [-0.1, 0.15].";
+        Please provide a delta in the range [%.2f, %.2f].", foot_height_lower_bound_, foot_height_upper_bound_;
     }
 
     return true;
@@ -568,7 +566,7 @@ bool UnitreeRos2HighController::setBodyHeightCallback(
     {
         res->success = false;
         res->message = "Error! Invalid body height delta! \
-        Please provide a delta in the range [-0.1, 0.15].";
+        Please provide a delta in the range [%.2f, %.2f].", body_height_lower_bound_, body_height_upper_bound_;
     }
 
     return true;
