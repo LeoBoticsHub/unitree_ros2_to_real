@@ -19,6 +19,7 @@ include_directories(
     include
 )
 
+# selecting the static or dinamic library
 option(USE_STATIC_LIBRARY "decide whether the unitree library is static of shared." OFF)
 
 set(LIBRARY_EXTENSION .so)  
