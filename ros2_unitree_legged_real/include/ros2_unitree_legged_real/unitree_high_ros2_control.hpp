@@ -187,6 +187,7 @@ private:
     double udp_loop_time_, state_pub_loop_time_; 
     double euler_x_bound_, euler_y_bound_, euler_z_bound_;
     double foot_height_lower_bound_, foot_height_upper_bound_, body_height_lower_bound_, body_height_upper_bound_;
+    double min_vx_, max_vx_, vy_bound_, w_bound_;
 
     std::shared_ptr<LoopFunc> loop_StatePub_, loop_udpSend_, loop_udpRecv_;
 

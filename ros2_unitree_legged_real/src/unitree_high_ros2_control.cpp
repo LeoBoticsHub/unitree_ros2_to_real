@@ -18,6 +18,10 @@ UnitreeRos2HighController::UnitreeRos2HighController():
     this->declare_parameter<double>("foot_height_upper_bound", 0.0);
     this->declare_parameter<double>("body_height_lower_bound", 0.0);
     this->declare_parameter<double>("body_height_upper_bound", 0.0);
+    this->declare_parameter<double>("min_vx", 0.0);
+    this->declare_parameter<double>("max_vx", 0.0);
+    this->declare_parameter<double>("vy_bound", 0.0);
+    this->declare_parameter<double>("w_bound", 0.0);
 
     this->get_parameter("robot_name", robot_name_);
     this->get_parameter("udp_loop_time", udp_loop_time_);
@@ -29,6 +33,10 @@ UnitreeRos2HighController::UnitreeRos2HighController():
     this->get_parameter("foot_height_upper_bound", foot_height_upper_bound_);
     this->get_parameter("body_height_lower_bound", body_height_lower_bound_);
     this->get_parameter("body_height_upper_bound", body_height_upper_bound_);
+    this->get_parameter("min_vx", min_vx_);
+    this->get_parameter("max_vx", max_vx_);
+    this->get_parameter("vy_bound", vy_bound_);
+    this->get_parameter("w_bound", w_bound_);
 
     RCLCPP_ERROR(this->get_logger(), robot_name_.c_str());
     RCLCPP_ERROR(this->get_logger(), "%.3f", euler_x_bound_);
