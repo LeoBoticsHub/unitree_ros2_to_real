@@ -2,7 +2,7 @@
 
 This package can send control command to real robot from ROS 2. You can do low-level control(namely control all joints on robot) and high-level control(namely control the walking direction and speed of robot).
 
-This version is suitable for unitree_legged_sdk v3.8.3, namely B1 robot.
+This version is suitable for unitree_legged_sdk v3.8.3, for B1 robot and v3.8.6 fo Go1.
 
 ## Packages
 
@@ -34,7 +34,6 @@ Clone the package in your workspace (e.g., `~/ros_ws/src`) and run from `ros_ws`
 
 * B1 robot:  `colcon build colcon build --cmake-args " -DUSE_STATIC_LIBRARY=OFF"`
 * Go1 robot:  `colcon build --cmake-args " -DUSE_STATIC_LIBRARY=ON"`
-
 
 ## Run
 
