@@ -18,31 +18,54 @@ We recommand users to run this package in Ubuntu 22.04 and ROS humble environmen
 
 make sure to install the following sdk on your computer before using this package.
 
-* [unitree_legged_sdk](https://github.com/LeoBoticsHub/unitree_ros_to_real/tree/B1_devel) (v3.8.3)
+* B1 robot: [unitree_legged_sdk](https://github.com/LeoBoticsHub/unitree_legged_sdk/tree/B1) (v3.8.3)
+
+* Go1 robot: [unitree_legged_sdk](https://github.com/LeoBoticsHub/unitree_legged_sdk/tree/go1) (v3.8.6)
 
 ### Notice
 
 The release v3.8.3 only supports for robot: B1.
+The release v3.8.6 only supports for robot: Go1.
 
 ## Build
 
 You can use colcon to build the ROS2 packages.  \
-Clone the package in your workspace (e.g., `~/ros_ws/src`) and run `colcon build` from the workspace folder.
+Clone the package in your workspace (e.g., `~/ros_ws/src`) and run from `ros_ws` directory:
+
+* B1 robot:  `colcon build colcon build --cmake-args " -DUSE_STATIC_LIBRARY=OFF"`
+* Go1 robot:  `colcon build --cmake-args " -DUSE_STATIC_LIBRARY=ON"`
+
 
 ## Run
 
-To run the high level B1 controller, bash the workspace and run the following:
+To run the high level controller, bash the workspace and run the following:
 
+* B1 robot:
+  
 ```bash
-    ros2 run ros2_unitree_legged_real unitree_high_ros2_control
+    ros2 launch ros2_unitree_legged_real ros2_control.launch.py robot_type:=b1
+```
+
+* Go1 robot:
+  
+```bash
+    ros2 launch ros2_unitree_legged_real ros2_control.launch.py robot_type:=go1
 ```
 
 ### Docker image
 
-If you want to run the controller directly on the B1 main computer, use connect to main computer and run:
+If you want to run the controller directly on the robots main computer, use connect to main computer and run:
+
+* B1 robot:
 
 ```bash
 docker_factory_run -i b1/ros2_control
+```
+
+* Go1 robot:
+
+```bash
+docker_factory_run -i go1/ros2_control
 ```
 
 or, if you use [robot_setup](https://github.com/LeoBoticsHub/robots_setup) bashrcs, from your pilot laptop,
@@ -62,10 +85,10 @@ To simplify interaction with the services spawn by `unitree_high_ros2_control` n
 ## Testing
 
 To test the functionalities of ```unitree_high_ros2_control``` node we provided a quick reference test to run.
-Start by running the B1 ROS2 controllor on the robot or your PC (Be sure that robot and host pc are on the same network or correctly connected):
+Start by running the ROS2 controllor on the robot or your PC (Be sure that robot and host pc are on the same network or correctly connected):
 
 ```bash
-    ros2 run ros2_unitree_legged_real unitree_high_ros2_control
+    ros2 launch ros2_unitree_legged_real ros2_control.launch.py robot_type:={ROBOT_TYPE}
 ```
 
 Once the controller is started, move the robot in stand down position (L2+A on controller) and start the test procedure on your host pc. Open a terminal in ```ros2_unitree_legged_real/test``` and run the test:
