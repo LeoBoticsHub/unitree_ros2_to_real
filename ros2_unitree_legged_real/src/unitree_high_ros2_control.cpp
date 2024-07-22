@@ -286,11 +286,11 @@ void UnitreeRos2HighController::cmdVelCallback(const geometry_msgs::msg::Twist::
         // check timer if previous wirless remote commands have been receives
         if(timer_on_ && (t_ - t_timer_).seconds() >= 5 || !timer_on_)
         {
-            // TODO check if setting gate type works for go1
             custom_->high_cmd.mode = static_cast<uint8_t>(ROBOT_STATE::TARGET_VEL);
             custom_->high_cmd.euler[0] = 0;
             custom_->high_cmd.euler[1] = 0;
             custom_->high_cmd.euler[2] = 0;
+            custom_->high_cmd.gaitType = 1;
             custom_->high_cmd.velocity[0] = bound(msg->linear.x, min_vx_, max_vx_);
             custom_->high_cmd.velocity[1] = bound(msg->linear.y, -vy_bound_, vy_bound_);
             custom_->high_cmd.yawSpeed = bound(msg->angular.z, -w_bound_, w_bound_);
