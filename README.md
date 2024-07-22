@@ -1,86 +1,87 @@
-# Introduction
-This package can send control command to real robot from ROS2. You can do low-level control(namely control all joints on robot) and high-level control(namely control the walking direction and speed of robot).
+# unitree_ros2_to_real
 
-This version is suitable for unitree_legged_sdk v3.5.1, namely Go1 robot.
+This package can send control command to real robot from ROS 2. You can do low-level control(namely control all joints on robot) and high-level control(namely control the walking direction and speed of robot).
 
-## Packages:
+This version is suitable for unitree_legged_sdk v3.8.3, namely B1 robot.
 
-Basic message function: `unitree_legged_msgs`
+## Packages
 
-The interface between ROS and real robot: `unitree_legged_real`
+Basic message function: `ros2_unitree_legged_msgs`
+
+The interface between ROS and real robot: `ros2_unitree_legged_real`
 
 ## Environment
-We recommand users to run this package in Ubuntu 18.04 and ROS2 eloquent environment
 
-# Dependencies
-* [unitree_legged_sdk](https://github.com/unitreerobotics): v3.5.1
+We recommand users to run this package in Ubuntu 22.04 and ROS humble environment.
 
-# Configuration
-First, creat a directory.
-```
-mkdir -p ~/ros2_ws/src
-```
-Then download this package into this `~/ros_ws/src` folder. 
+## Dependency
 
-After you download this package into this folder, your folder should be like this
-```
-~/ros2_ws/src/unitree_ros2_to_real
-```
+make sure to install the following sdk on your computer before using this package.
 
-And now download unitree_legged_sdk v3.5.1 into the path `~/ros_ws/src_unitree_ros2_to_real`
+* [unitree_legged_sdk](https://github.com/LeoBoticsHub/unitree_ros_to_real/tree/B1_devel) (v3.8.3)
 
+### Notice
 
-# Build
-```
-colcon build
-```
+The release v3.8.3 only supports for robot: B1.
 
-# Setup the net connection
-First, please connect the network cable between your PC and robot. Then run `ifconfig` in a terminal, you will find your port name. For example, `enx000ec6612921`.
+## Build
 
-Then, open the `ipconfig.sh` file under the folder `unitree_legged_real`, modify the port name to your own. And run the following commands:
-```
-sudo chmod +x ipconfig.sh
-sudo ./ipconfig.sh
-```
-If you run the `ifconfig` again, you will find that port has `inet` and `netmask` now.
-In order to set your port automatically, you can modify `interfaces`:
-```
-sudo gedit /etc/network/interfaces
-```
-And add the following 4 lines at the end:
-```
-auto enx000ec6612921
-iface enx000ec6612921 inet static
-address 192.168.123.162
-netmask 255.255.255.0
-```
-Where the port name have to be changed to your own.
+You can use colcon to build the ROS2 packages.  \
+Clone the package in your workspace (e.g., `~/ros_ws/src`) and run `colcon build` from the workspace folder.
 
-# Run the package
-Before you do high level or low level control, you should run the `ros2_udp` node, which is a bridge that connects users and robot
-```
-ros2 run unitree_legged_real ros2_udp highlevel
+## Run
+
+To run the high level B1 controller, bash the workspace and run the following:
+
+```bash
+    ros2 run ros2_unitree_legged_real unitree_high_ros2_control
 ```
 
-or
+### Docker image
 
-```
-ros2 run unitree_legged_real ros2_udp lowlevel
-```
+If you want to run the controller directly on the B1 main computer, use connect to main computer and run:
 
-it depends which control mode(low level or high level) you want to use.
-
-In the high level mode, you can run the node `ros2_walk_example`
-```
-ros2 run unitree_legged_real ros2_walk_example
+```bash
+docker_factory_run -i b1/ros2_control
 ```
 
-In the low level mode, you can run the node `ros2_position_example`
-```
-ros2 run unitree_legged_real ros2_position_example
+or, if you use [robot_setup](https://github.com/LeoBoticsHub/robots_setup) bashrcs, from your pilot laptop,
+
+```bash
+launch_ros2_control
 ```
 
-And before you do the low-level control, please press L2+A to sit the robot down and then press L1+L2+start to make the robot into
-mode in which you can do joint-level control, finally make sure you hang the robot up before you run low-level control.
+## Unitree ROS 2 client interface
 
+To simplify interaction with the services spawn by `unitree_high_ros2_control` node, we provided c++ and python libraries containing the class `UnitreeRos2Client` which provide a easy to use interface with ros services.
+
+* See [unitree_ros2_client.hpp](ros2_unitree_legged_real/include/ros2_unitree_legged_real/unitree_ros2_client.hpp) and [unitree_services_handler.cpp](ros2_unitree_legged_real/src/unitree_ros2_client.cpp) to have an hint on how to use the c++ version.
+
+* See [unitreeRos2Client.py](ros2_unitree_legged_real/ros2_unitree_legged_real/unitreeRos2Client.py) for the python version
+
+## Testing
+
+To test the functionalities of ```unitree_high_ros2_control``` node we provided a quick reference test to run.
+Start by running the B1 ROS2 controllor on the robot or your PC (Be sure that robot and host pc are on the same network or correctly connected):
+
+```bash
+    ros2 run ros2_unitree_legged_real unitree_high_ros2_control
+```
+
+Once the controller is started, move the robot in stand down position (L2+A on controller) and start the test procedure on your host pc. Open a terminal in ```ros2_unitree_legged_real/test``` and run the test:
+
+```bash
+    python test_ros2control.py
+```
+
+It will produce a recap of the test named ```test_recap_DATE_TIME``` where the succesfull and unsuccesful tests are reported.
+
+## OLD README VERSION
+
+The original README.md version can be found here: [OLD_README](old_readme.md)
+
+## Authors
+
+The package is provided by:
+
+* [Federico Rollo](https://github.com/FedericoRollo) [Mantainer]

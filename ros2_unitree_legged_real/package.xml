@@ -1,0 +1,25 @@
+<package format="3">
+    <name>ros2_unitree_legged_real</name>
+    <version>0.0.0</version>
+    <description>The unitree_legged_real package</description>
+
+    <maintainer email="federico.rollo@leonardo.com">Federico Rollo</maintainer>
+    <license>TODO</license>
+
+    <buildtool_depend>ament_cmake</buildtool_depend>
+
+    <depend>ros2_unitree_legged_msgs</depend>
+    <depend>eigen</depend>
+    <depend>rclpy</depend>
+    <depend>std_msgs</depend>
+    <depend>rclcpp</depend>
+    <depend>sensor_msgs</depend>
+    <depend>nav_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>tf2_ros</depend>
+    <depend>std_srvs</depend>
+
+    <export>
+        <build_type>ament_cmake</build_type>
+    </export>
+</package>
