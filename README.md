@@ -32,7 +32,7 @@ The release v3.8.6 only supports for robot: Go1.
 You can use colcon to build the ROS2 packages.  \
 Clone the package in your workspace (e.g., `~/ros_ws/src`) and run from `ros_ws` directory:
 
-* B1 robot:  `colcon build colcon build --cmake-args " -DUSE_STATIC_LIBRARY=OFF"`
+* B1 robot:  `colcon build --cmake-args " -DUSE_STATIC_LIBRARY=OFF"`
 * Go1 robot:  `colcon build --cmake-args " -DUSE_STATIC_LIBRARY=ON"`
 
 ## Run
