@@ -38,10 +38,6 @@ UnitreeRos2HighController::UnitreeRos2HighController():
     this->get_parameter("vy_bound", vy_bound_);
     this->get_parameter("w_bound", w_bound_);
 
-    RCLCPP_ERROR(this->get_logger(), robot_name_.c_str());
-    RCLCPP_ERROR(this->get_logger(), "%.3f", euler_x_bound_);
-    RCLCPP_ERROR(this->get_logger(), "%.3f", foot_height_lower_bound_);
-
     // select the correct robot ip depending on robot name
     std::string robot_ip{};
     std::shared_ptr<Safety> safe;
