@@ -44,13 +44,16 @@ UnitreeRos2HighController::UnitreeRos2HighController():
 
     // select the correct robot ip depending on robot name
     std::string robot_ip{};
+    std::shared_ptr<Safety> safe;
     if (robot_name_.compare("go1") == 0)
     {
         robot_ip = "192.168.12.1";
+        safe = std::make_shared<Safety>(LeggedType::Go1);
     }
     else if (robot_name_.compare("b1") == 0)
     {
         robot_ip = "192.168.123.220";
+        safe = std::make_shared<Safety>(LeggedType::B1);
     }
     else
     {
@@ -58,7 +61,7 @@ UnitreeRos2HighController::UnitreeRos2HighController():
         exit(1);
     }
 
-    custom_ = std::make_shared<Custom>(robot_ip.c_str());
+    custom_ = std::make_shared<Custom>(robot_ip.c_str(), *safe);
 }
 
 void UnitreeRos2HighController::init_class()

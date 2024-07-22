@@ -46,12 +46,14 @@ public:
 
     xRockerBtnDataStruct keyData;
 
+    Safety safe_;
+
 public:
 
     using SharedPtr = std::shared_ptr<Custom>; 
 
-    Custom(const char* robot_ip): 
-        high_udp(8090, robot_ip, 8082, sizeof(HighCmd), sizeof(HighState))
+    Custom(const char* robot_ip, Safety safe): safe_(safe),
+        high_udp(HIGHLEVEL, 8090, robot_ip, 8082)
     {
         high_udp.InitCmdData(high_cmd);
     }
