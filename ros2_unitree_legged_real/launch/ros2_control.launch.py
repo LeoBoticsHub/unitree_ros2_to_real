@@ -14,6 +14,7 @@ def launch_setup(context, *args, **kwargs):
     # Declaring launch arguments
     publish_odom_tf = DeclareLaunchArgument('publish_odom_tf', default_value='False')
     robot_type = DeclareLaunchArgument('robot_type', default_value='b1')
+    tf_namespace = DeclareLaunchArgument('tf_namespace', default_value='')
 
     # Convert robot name in python string
     robot_name = LaunchConfiguration('robot_type').perform(context)
@@ -36,12 +37,13 @@ def launch_setup(context, *args, **kwargs):
     upload_launch = TimerAction(period=1.0, actions=[IncludeLaunchDescription(
         PythonLaunchDescriptionSource(robot_description + '/launch/upload.launch.py'), 
         launch_arguments = {
-            'use_rviz': 'false'
+            'use_rviz': 'false',
+            'tf_namespace': LaunchConfiguration('tf_namespace')
         }.items()
     )])
 
 
-    return [publish_odom_tf, robot_type, ros2_control, upload_launch]
+    return [publish_odom_tf, robot_type, tf_namespace, ros2_control, upload_launch]
 
 def generate_launch_description():
 
