@@ -26,7 +26,8 @@ def launch_setup(context, *args, **kwargs):
         name='unitree_high_ros2_control',
         output='screen',
         parameters=[{'publish_odom_tf': LaunchConfiguration('publish_odom_tf'),
-                     'robot_name': robot_name},
+                     'robot_name': robot_name,
+                     'tf_namespace': LaunchConfiguration('tf_namespace')},
                      os.path.join(get_package_share_directory("ros2_unitree_legged_real"), 'config', robot_name + '.yaml')]
     )
 
