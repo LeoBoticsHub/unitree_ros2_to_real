@@ -9,6 +9,7 @@ UnitreeRos2HighController::UnitreeRos2HighController():
 {   
     // read ros parameters
     this->declare_parameter<std::string>("robot_name", "");
+    this->declare_parameter<std::string>("tf_namespace", "");
     this->declare_parameter<double>("udp_loop_time", 0.0);
     this->declare_parameter<double>("state_pub_loop_time", 0.0);
     this->declare_parameter<double>("euler_x_bound", 0.0);
@@ -24,6 +25,7 @@ UnitreeRos2HighController::UnitreeRos2HighController():
     this->declare_parameter<double>("w_bound", 0.0);
 
     this->get_parameter("robot_name", robot_name_);
+    this->get_parameter("tf_namespace", tf_namespace_);
     this->get_parameter("udp_loop_time", udp_loop_time_);
     this->get_parameter("state_pub_loop_time", state_pub_loop_time_);
     this->get_parameter("euler_x_bound", euler_x_bound_);
@@ -69,8 +71,8 @@ void UnitreeRos2HighController::init_class()
     joint_state_msg_.effort.resize(N_MOTORS);
 
     // * set odom frame ids
-    odom_H_trunk_.header.frame_id = ODOM_NAME;
-    odom_H_trunk_.child_frame_id = BASE_LINK_NAME;
+    odom_H_trunk_.header.frame_id = tf_namespace_ + ODOM_NAME;
+    odom_H_trunk_.child_frame_id = tf_namespace_ + BASE_LINK_NAME;
 
     // * initialize time
     t_ = t_prev_ = t_timer_ = t_cmd_orient_ = t_cmd_vel_ = this->get_clock()->now();
@@ -214,7 +216,7 @@ void UnitreeRos2HighController::highStatePublisher()
     {
         // joint states
         joint_state_msg_.header.stamp = t_;
-        joint_state_msg_.header.frame_id = BASE_LINK_NAME;
+        joint_state_msg_.header.frame_id = tf_namespace_ + BASE_LINK_NAME;
 
         for (unsigned int motor_id = 0; motor_id < N_MOTORS; ++motor_id)
 	    {
@@ -226,7 +228,7 @@ void UnitreeRos2HighController::highStatePublisher()
 
         // imu
 	    imu_msg_.header.stamp = t_;
-	    imu_msg_.header.frame_id = IMU_NAME;
+	    imu_msg_.header.frame_id = tf_namespace_ + IMU_NAME;
 	    imu_msg_.orientation.w = static_cast<double>(custom_->high_state.imu.quaternion[0]);
 	    imu_msg_.orientation.x = static_cast<double>(custom_->high_state.imu.quaternion[1]);
 	    imu_msg_.orientation.y = static_cast<double>(custom_->high_state.imu.quaternion[2]);
@@ -240,8 +242,8 @@ void UnitreeRos2HighController::highStatePublisher()
 
         // odom
 	    odom_msg_.header.stamp = t_;
-	    odom_msg_.header.frame_id            = ODOM_NAME;
-	    odom_msg_.child_frame_id             = BASE_LINK_NAME;
+	    odom_msg_.header.frame_id            = tf_namespace_ + ODOM_NAME;
+	    odom_msg_.child_frame_id             = tf_namespace_ + BASE_LINK_NAME;
 	    odom_msg_.pose.pose.position.x       = static_cast<double>(custom_->high_state.position[0]) - initial_position_[0];
 	    odom_msg_.pose.pose.position.y       = static_cast<double>(custom_->high_state.position[1]) - initial_position_[1];
 	    odom_msg_.pose.pose.position.z       = static_cast<double>(custom_->high_state.position[2]) - initial_position_[2] + initial_body_height_;
@@ -399,7 +401,7 @@ bool UnitreeRos2HighController::batteryStateCallback(
 )
 {
     battery_msg_.header.stamp = t_;
-    battery_msg_.header.frame_id = BASE_LINK_NAME;
+    battery_msg_.header.frame_id = tf_namespace_ + BASE_LINK_NAME;
     battery_msg_.current = static_cast<float>(1000.0 * custom_->high_state.bms.current); // mA -> A
     battery_msg_.voltage = static_cast<float>(1000.0 * avg<uint16_t>(&custom_->high_state.bms.cell_vol[0], 10)); // mV -> V
     battery_msg_.percentage = custom_->high_state.bms.SOC;
