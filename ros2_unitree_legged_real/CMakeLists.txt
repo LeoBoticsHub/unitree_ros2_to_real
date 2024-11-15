@@ -72,7 +72,7 @@ install(TARGETS
     ros2_udp
     test_udp
     # ros2_walk_example
-    # ros2_position_example
+    ros2_position_example
     unitree_high_ros2_control
     DESTINATION lib/${PROJECT_NAME}
 )

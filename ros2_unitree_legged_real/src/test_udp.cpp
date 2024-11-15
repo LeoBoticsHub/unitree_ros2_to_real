@@ -138,6 +138,7 @@ int main(int argc, char **argv)
     printf("Low level running!\n");
 
     pub_high = node->create_publisher<ros2_unitree_legged_msgs::msg::HighState>("high_state", 1);
+    pub_low = node->create_publisher<ros2_unitree_legged_msgs::msg::LowState>("low_state", 1);
 
     LoopFunc loop_udpSendH("high_udp_send", 0.002, 3, boost::bind(&CustomTest::highUdpSend, &custom_test));
     LoopFunc loop_udpRecvH("high_udp_recv", 0.002, 3, boost::bind(&CustomTest::highUdpRecv, &custom_test));
@@ -159,14 +160,14 @@ int main(int argc, char **argv)
         // custom.high_udp.Recv();
         // custom.high_udp.GetRecv(custom.high_state);
 
-        // ros2_unitree_legged_msgs::msg::LowState low_state_ros;
+        ros2_unitree_legged_msgs::msg::LowState low_state_ros;
 
         std::cout << custom_test.low_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
         std::cout << custom_test.low_state.bms.current << std::endl;
 
-        // low_state_ros = state2rosMsg(custom_test.low_state);
+        low_state_ros = state2rosMsg(custom_test.low_state);
 
-        // pub_low->publish(low_state_ros);
+        pub_low->publish(low_state_ros);
 
         ros2_unitree_legged_msgs::msg::HighState high_state_ros;
 
