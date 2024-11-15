@@ -51,8 +51,8 @@ public:
         low_udp(LOWLEVEL, 8091, "192.168.123.10", 8007),
         high_udp(HIGHLEVEL, 8090, "192.168.123.161", 8082)
     {
-        // high_udp.InitCmdData(high_cmd);
-        // low_udp.InitCmdData(low_cmd);
+        high_udp.InitCmdData(high_cmd);
+        low_udp.InitCmdData(low_cmd);
     }
 
     void highUdpSend()
@@ -88,8 +88,8 @@ public:
 
 CustomTest custom_test;
 
-// ros::Subscriber sub_high;
-// ros::Subscriber sub_low;
+ros::Subscriber sub_high;
+ros::Subscriber sub_low;
 
 rclcpp::Publisher<ros2_unitree_legged_msgs::msg::HighState>::SharedPtr pub_high;
 rclcpp::Publisher<ros2_unitree_legged_msgs::msg::LowState>::SharedPtr pub_low;
@@ -139,6 +139,10 @@ int main(int argc, char **argv)
 
     pub_high = node->create_publisher<ros2_unitree_legged_msgs::msg::HighState>("high_state", 1);
     pub_low = node->create_publisher<ros2_unitree_legged_msgs::msg::LowState>("low_state", 1);
+
+    sub_low = node->create_subscription<ros2_unitree_legged_msgs::msg::LowCmd>("low_cmd", 1, lowCmdCallback);
+    sub_high = node->create_subscription<ros2_unitree_legged_msgs::msg::HighCmd>("high_cmd", 1, highCmdCallback);
+
 
     LoopFunc loop_udpSendH("high_udp_send", 0.002, 3, boost::bind(&CustomTest::highUdpSend, &custom_test));
     LoopFunc loop_udpRecvH("high_udp_recv", 0.002, 3, boost::bind(&CustomTest::highUdpRecv, &custom_test));
