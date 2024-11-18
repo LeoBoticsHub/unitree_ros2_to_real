@@ -127,9 +127,13 @@ void lowCmdCallback(const ros2_unitree_legged_msgs::msg::LowCmd::SharedPtr msg)
 
     pub_low->publish(low_state_ros);
 
+    // std::cout << "------------------------------------------" << std::endl;
+    // std::cout << custom_test.low_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
+    // std::cout << custom_test.high_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
+    // std::cout << "------------------------------------------" << std::endl;
 
-    std::cout << custom_test.low_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
-    std::cout << custom_test.low_state.bms.current << std::endl;
+    // std::cout << custom_test.low_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
+    // std::cout << custom_test.low_state.bms.current << std::endl;
 
     // printf("lowCmdCallback ending!\t%ld\n\n", ::low_count++);
 }
