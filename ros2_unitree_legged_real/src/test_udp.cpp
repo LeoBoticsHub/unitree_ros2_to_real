@@ -118,8 +118,8 @@ void lowCmdCallback(const ros2_unitree_legged_msgs::msg::LowCmd::SharedPtr msg)
 
     custom_test.low_cmd = rosMsg2Cmd(msg);
 
-    custom_test.low_udp.SetSend(custom_test.low_cmd);
-    custom_test.low_udp.Send();
+    // custom_test.low_udp.SetSend(custom_test.low_cmd);
+    // custom_test.low_udp.Send();
 
     ros2_unitree_legged_msgs::msg::LowState low_state_ros;
 
@@ -141,62 +141,99 @@ int main(int argc, char **argv)
     auto node = rclcpp::Node::make_shared("node_ros2_udp_test");
 
 
-    printf("Low level running!\n");
+    // printf("Low level running!\n");
 
-    // pub_high = node->create_publisher<ros2_unitree_legged_msgs::msg::HighState>("high_state", 1);
-    pub_low = node->create_publisher<ros2_unitree_legged_msgs::msg::LowState>("low_state", 1);
+    // // pub_high = node->create_publisher<ros2_unitree_legged_msgs::msg::HighState>("high_state", 1);
+    // pub_low = node->create_publisher<ros2_unitree_legged_msgs::msg::LowState>("low_state", 1);
 
-    sub_low = node->create_subscription<ros2_unitree_legged_msgs::msg::LowCmd>("low_cmd", 1, lowCmdCallback);
-    // sub_high = node->create_subscription<ros2_unitree_legged_msgs::msg::HighCmd>("high_cmd", 1, highCmdCallback);
+    // sub_low = node->create_subscription<ros2_unitree_legged_msgs::msg::LowCmd>("low_cmd", 1, lowCmdCallback);
+    // // sub_high = node->create_subscription<ros2_unitree_legged_msgs::msg::HighCmd>("high_cmd", 1, highCmdCallback);
 
 
 
-    // LoopFunc loop_udpSendH("high_udp_send", 0.002, 3, boost::bind(&CustomTest::highUdpSend, &custom_test));
-    // LoopFunc loop_udpRecvH("high_udp_recv", 0.002, 3, boost::bind(&CustomTest::highUdpRecv, &custom_test));
+    // // LoopFunc loop_udpSendH("high_udp_send", 0.002, 3, boost::bind(&CustomTest::highUdpSend, &custom_test));
+    // // LoopFunc loop_udpRecvH("high_udp_recv", 0.002, 3, boost::bind(&CustomTest::highUdpRecv, &custom_test));
 
-    // loop_udpSendH.start();
-    // loop_udpRecvH.start();
+    // // loop_udpSendH.start();
+    // // loop_udpRecvH.start();
 
-    LoopFunc loop_udpSendL("low_udp_send", 0.002, 3, boost::bind(&CustomTest::lowUdpSend, &custom_test));
-    LoopFunc loop_udpRecvL("low_udp_recv", 0.002, 3, boost::bind(&CustomTest::lowUdpRecv, &custom_test));
+    // LoopFunc loop_udpSendL("low_udp_send", 0.002, 3, boost::bind(&CustomTest::lowUdpSend, &custom_test));
+    // LoopFunc loop_udpRecvL("low_udp_recv", 0.002, 3, boost::bind(&CustomTest::lowUdpRecv, &custom_test));
 
-    loop_udpRecvL.start();
-    loop_udpSendL.start();
+    // loop_udpRecvL.start();
+    // loop_udpSendL.start();
 
-    // std::cout << custom_test.low_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
+    // // std::cout << custom_test.low_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
 
-    // std::cout<<"yep"<<std::endl;
-    // std::cout << custom_test.high_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
+    // // std::cout<<"yep"<<std::endl;
+    // // std::cout << custom_test.high_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
 
-    // rclcpp::spin(node);
-    // rclcpp::shutdown();
+    // // rclcpp::spin(node);
+    // // rclcpp::shutdown();
 
-    rclcpp::Rate rate(10);  // 10 Hz
+    // rclcpp::Rate rate(10);  // 10 Hz
 
-    while (rclcpp::ok())
+    // while (rclcpp::ok())
+    // {
+    //     ros2_unitree_legged_msgs::msg::LowState low_state_ros_test;
+
+    //     low_state_ros_test = state2rosMsg(custom_test.low_state);
+
+    //     pub_low->publish(low_state_ros_test);
+    //     std::cout << custom_test.low_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
+
+    //     // ros2_unitree_legged_msgs::msg::HighState high_state_ros_test;
+
+    //     // // Convert the state to a ROS message
+    //     // high_state_ros_test = state2rosMsg(custom_test.high_state);
+
+    //     // // Publish the high state
+    //     // pub_high->publish(high_state_ros_test);
+
+    //     // std::cout<<"yep"<<std::endl;
+    //     // std::cout << custom_test.high_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
+    //     std::cout<<"---------------------------------------------------------"<<std::endl;
+
+    //     // Sleep to maintain the loop rate
+    //     rate.sleep();
+    // }
+    if (strcasecmp(argv[1], "LOWLEVEL") == 0)
     {
-        ros2_unitree_legged_msgs::msg::LowState low_state_ros_test;
+        printf("low level runing!\n");
 
-        low_state_ros_test = state2rosMsg(custom_test.low_state);
+        pub_low = node->create_publisher<ros2_unitree_legged_msgs::msg::LowState>("low_state", 1);
+        sub_low = node->create_subscription<ros2_unitree_legged_msgs::msg::LowCmd>("low_cmd", 1, lowCmdCallback);
+        
+        LoopFunc loop_udpSendL("low_udp_send", 0.002, 3, boost::bind(&CustomTest::lowUdpSend, &custom_test));
+        LoopFunc loop_udpRecvL("low_udp_recv", 0.002, 3, boost::bind(&CustomTest::lowUdpRecv, &custom_test));
 
-        pub_low->publish(low_state_ros_test);
-        std::cout << custom_test.low_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
+        loop_udpRecvL.start();
+        loop_udpSendL.start();
 
-        // ros2_unitree_legged_msgs::msg::HighState high_state_ros_test;
-
-        // // Convert the state to a ROS message
-        // high_state_ros_test = state2rosMsg(custom_test.high_state);
-
-        // // Publish the high state
-        // pub_high->publish(high_state_ros_test);
-
-        // std::cout<<"yep"<<std::endl;
-        // std::cout << custom_test.high_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
-        std::cout<<"---------------------------------------------------------"<<std::endl;
-
-        // Sleep to maintain the loop rate
-        rate.sleep();
+        rclcpp::spin(node);
     }
+    else if (strcasecmp(argv[1], "HIGHLEVEL") == 0)
+    {
+        printf("high level runing!\n");
+
+        pub_high = node->create_publisher<ros2_unitree_legged_msgs::msg::HighState>("high_state", 1);
+        sub_high = node->create_subscription<ros2_unitree_legged_msgs::msg::HighCmd>("high_cmd", 1, highCmdCallback);
+
+        LoopFunc loop_udpSendH("high_udp_send", 0.002, 3, boost::bind(&CustomTest::highUdpSend, &custom_test));
+        LoopFunc loop_udpRecvH("high_udp_recv", 0.002, 3, boost::bind(&CustomTest::highUdpRecv, &custom_test));
+
+        loop_udpSendH.start();
+        loop_udpRecvH.start();
+
+        rclcpp::spin(node);
+    }
+    else
+    {
+        std::cout << "Control level name error! Can only be highlevel or lowlevel(not case sensitive)" << std::endl;
+        exit(-1);
+    }
+
+    rclcpp::shutdown();
 
     return 0;
 }
