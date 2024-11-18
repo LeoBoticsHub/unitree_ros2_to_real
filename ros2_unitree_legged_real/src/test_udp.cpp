@@ -88,8 +88,8 @@ public:
 
 CustomTest custom_test;
 
-ros::Subscriber sub_high;
-ros::Subscriber sub_low;
+rclcpp::Subscription<ros2_unitree_legged_msgs::msg::HighCmd>::SharedPtr sub_high;
+rclcpp::Subscription<ros2_unitree_legged_msgs::msg::LowCmd>::SharedPtr sub_low;
 
 rclcpp::Publisher<ros2_unitree_legged_msgs::msg::HighState>::SharedPtr pub_high;
 rclcpp::Publisher<ros2_unitree_legged_msgs::msg::LowState>::SharedPtr pub_low;
@@ -97,36 +97,42 @@ rclcpp::Publisher<ros2_unitree_legged_msgs::msg::LowState>::SharedPtr pub_low;
 long high_count = 0;
 long low_count = 0;
 
-// void highCmdCallback(const unitree_legged_msgs::HighCmd::ConstPtr &msg)
-// {
-//     printf("highCmdCallback is running !\t%ld\n", ::high_count);
+void highCmdCallback(const ros2_unitree_legged_msgs::msg::HighCmd::SharedPtr msg)
+{
+    // printf("highCmdCallback is running !\t%ld\n", ::high_count);
 
-//     custom.high_cmd = rosMsg2Cmd(msg);
+    custom_test.high_cmd = rosMsg2Cmd(msg);
 
-//     unitree_legged_msgs::HighState high_state_ros;
+    ros2_unitree_legged_msgs::msg::HighState high_state_ros;
 
-//     high_state_ros = state2rosMsg(custom.high_state);
+    high_state_ros = state2rosMsg(custom_test.high_state);
 
-//     pub_high.publish(high_state_ros);
+    pub_high->publish(high_state_ros);
+    // printf("highCmdCallback ending !\t%ld\n\n", ::high_count++);
+}
 
-//     printf("highCmdCallback ending !\t%ld\n\n", ::high_count++);
-// }
+void lowCmdCallback(const ros2_unitree_legged_msgs::msg::LowCmd::SharedPtr msg)
+{
 
-// void lowCmdCallback(const unitree_legged_msgs::LowCmd::ConstPtr &msg)
-// {
+    // printf("lowCmdCallback is running !\t%ld\n", low_count);
 
-//     printf("lowCmdCallback is running !\t%ld\n", low_count);
+    custom_test.low_cmd = rosMsg2Cmd(msg);
 
-//     custom.low_cmd = rosMsg2Cmd(msg);
+    custom_test.low_udp.SetSend(custom_test.low_cmd);
+    custom_test.low_udp.Send();
 
-//     unitree_legged_msgs::LowState low_state_ros;
+    ros2_unitree_legged_msgs::msg::LowState low_state_ros;
 
-//     low_state_ros = state2rosMsg(custom.low_state);
+    low_state_ros = state2rosMsg(custom_test.low_state);
 
-//     pub_low.publish(low_state_ros);
+    pub_low->publish(low_state_ros);
 
-//     printf("lowCmdCallback ending!\t%ld\n\n", ::low_count++);
-// }
+
+    std::cout << custom_test.low_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
+    std::cout << custom_test.low_state.bms.current << std::endl;
+
+    // printf("lowCmdCallback ending!\t%ld\n\n", ::low_count++);
+}
 
 int main(int argc, char **argv)
 {
@@ -141,7 +147,8 @@ int main(int argc, char **argv)
     pub_low = node->create_publisher<ros2_unitree_legged_msgs::msg::LowState>("low_state", 1);
 
     sub_low = node->create_subscription<ros2_unitree_legged_msgs::msg::LowCmd>("low_cmd", 1, lowCmdCallback);
-    sub_high = node->create_subscription<ros2_unitree_legged_msgs::msg::HighCmd>("high_cmd", 1, highCmdCallback);
+    // sub_high = node->create_subscription<ros2_unitree_legged_msgs::msg::HighCmd>("high_cmd", 1, highCmdCallback);
+
 
 
     LoopFunc loop_udpSendH("high_udp_send", 0.002, 3, boost::bind(&CustomTest::highUdpSend, &custom_test));
@@ -156,33 +163,36 @@ int main(int argc, char **argv)
     loop_udpRecvL.start();
     loop_udpSendL.start();
 
+    std::cout << custom_test.low_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
+    std::cout << custom_test.low_state.bms.current << std::endl;
+
+    std::cout<<"yep"<<std::endl;
+    std::cout << custom_test.high_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
+
+    // rclcpp::spin(node);
+    // rclcpp::shutdown();
+
     rclcpp::Rate rate(10);  // 10 Hz
 
     while (rclcpp::ok())
     {
-        // Receive new state from the UDP connection
-        // custom.high_udp.Recv();
-        // custom.high_udp.GetRecv(custom.high_state);
+        ros2_unitree_legged_msgs::msg::LowState low_state_ros_test;
 
-        ros2_unitree_legged_msgs::msg::LowState low_state_ros;
+        low_state_ros_test = state2rosMsg(custom_test.low_state);
 
+        pub_low->publish(low_state_ros_test);
         std::cout << custom_test.low_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
-        std::cout << custom_test.low_state.bms.current << std::endl;
 
-        low_state_ros = state2rosMsg(custom_test.low_state);
-
-        pub_low->publish(low_state_ros);
-
-        ros2_unitree_legged_msgs::msg::HighState high_state_ros;
+        ros2_unitree_legged_msgs::msg::HighState high_state_ros_test;
 
         // Convert the state to a ROS message
-        high_state_ros = state2rosMsg(custom_test.high_state);
+        high_state_ros_test = state2rosMsg(custom_test.high_state);
 
         // Publish the high state
-        pub_high->publish(high_state_ros);
+        pub_high->publish(high_state_ros_test);
 
-        // Increment and print the high count
-        // printf("Published high state #%ld\n", high_count++);
+        std::cout<<"yep"<<std::endl;
+        std::cout << custom_test.high_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
         
         // Sleep to maintain the loop rate
         rate.sleep();
