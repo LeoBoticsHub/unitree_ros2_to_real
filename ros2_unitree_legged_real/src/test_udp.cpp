@@ -44,6 +44,24 @@ public:
     LowCmd low_cmd = {0};
     LowState low_state = {0};
 
+        // * Joint variables
+    const std::array<unsigned int, 12> b1_motor_idxs
+    {{
+        UNITREE_LEGGED_SDK::FL_0, UNITREE_LEGGED_SDK::FL_1, UNITREE_LEGGED_SDK::FL_2, // LF
+        UNITREE_LEGGED_SDK::RL_0, UNITREE_LEGGED_SDK::RL_1, UNITREE_LEGGED_SDK::RL_2, // LH
+        UNITREE_LEGGED_SDK::FR_0, UNITREE_LEGGED_SDK::FR_1, UNITREE_LEGGED_SDK::FR_2, // RF
+        UNITREE_LEGGED_SDK::RR_0, UNITREE_LEGGED_SDK::RR_1, UNITREE_LEGGED_SDK::RR_2, // RH
+    }};
+
+    const std::vector<std::string> b1_motor_names
+    {{
+        "FL_hip_joint", "FL_thigh_joint", "FL_calf_joint", 
+        "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint", 
+        "FR_hip_joint", "FR_thigh_joint", "FR_calf_joint", 
+        "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint", 
+    }};
+    sensor_msgs::msg::JointState actual_joint_states_;
+
 public:
     CustomTest()
         : 
@@ -93,9 +111,11 @@ rclcpp::Subscription<ros2_unitree_legged_msgs::msg::LowCmd>::SharedPtr sub_low;
 
 rclcpp::Publisher<ros2_unitree_legged_msgs::msg::HighState>::SharedPtr pub_high;
 rclcpp::Publisher<ros2_unitree_legged_msgs::msg::LowState>::SharedPtr pub_low;
+rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr pub_joint_state;
 
 long high_count = 0;
 long low_count = 0;
+auto ros_clock = rclcpp::Clock(RCL_ROS_TIME);
 
 void highCmdCallback(const ros2_unitree_legged_msgs::msg::HighCmd::SharedPtr msg)
 {
@@ -125,6 +145,18 @@ void lowCmdCallback(const ros2_unitree_legged_msgs::msg::LowCmd::SharedPtr msg)
 
     low_state_ros = state2rosMsg(custom_test.low_state);
 
+    custom_test.actual_joint_states_.header.stamp = ros_clock.now();
+
+    custom_test.actual_joint_states_.name.resize(custom_test.b1_motor_names.size());
+    custom_test.actual_joint_states_.position.resize(custom_test.b1_motor_names.size());
+    custom_test.actual_joint_states_.name = custom_test.b1_motor_names;
+
+    for (size_t i = 0; i < custom_test.b1_motor_names.size(); ++i)  
+    {
+        custom_test.actual_joint_states_.position[i]= custom_test.low_state.motorState[custom_test.b1_motor_idxs[i]].q;
+    } 
+
+    pub_joint_state->publish(custom_test.actual_joint_states_);
     pub_low->publish(low_state_ros);
 
     // std::cout << "------------------------------------------" << std::endl;
@@ -206,6 +238,7 @@ int main(int argc, char **argv)
         printf("low level runing!\n");
 
         pub_low = node->create_publisher<ros2_unitree_legged_msgs::msg::LowState>("low_state", 1);
+        pub_joint_state = node->create_publisher<sensor_msgs::msg::JointState>("test_joint_states", 1);
         sub_low = node->create_subscription<ros2_unitree_legged_msgs::msg::LowCmd>("low_cmd", 1, lowCmdCallback);
         
         LoopFunc loop_udpSendL("low_udp_send", 0.002, 3, boost::bind(&CustomTest::lowUdpSend, &custom_test));
