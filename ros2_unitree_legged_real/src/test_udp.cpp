@@ -154,6 +154,7 @@ void lowCmdCallback(const ros2_unitree_legged_msgs::msg::LowCmd::SharedPtr msg)
     for (size_t i = 0; i < custom_test.b1_motor_names.size(); ++i)  
     {
         custom_test.actual_joint_states_.position[i]= custom_test.low_state.motorState[custom_test.b1_motor_idxs[i]].q;
+        // custom_test.actual_joint_states_.velocity[i]= custom_test.low_state.motorState[custom_test.b1_motor_idxs[i]].dq;
     } 
 
     pub_joint_state->publish(custom_test.actual_joint_states_);
