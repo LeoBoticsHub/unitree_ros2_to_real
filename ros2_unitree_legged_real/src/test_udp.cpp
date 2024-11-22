@@ -48,16 +48,16 @@ public:
     const std::array<unsigned int, 12> b1_motor_idxs
     {{
         UNITREE_LEGGED_SDK::FL_0, UNITREE_LEGGED_SDK::FL_1, UNITREE_LEGGED_SDK::FL_2, // LF
-        UNITREE_LEGGED_SDK::RL_0, UNITREE_LEGGED_SDK::RL_1, UNITREE_LEGGED_SDK::RL_2, // LH
         UNITREE_LEGGED_SDK::FR_0, UNITREE_LEGGED_SDK::FR_1, UNITREE_LEGGED_SDK::FR_2, // RF
+        UNITREE_LEGGED_SDK::RL_0, UNITREE_LEGGED_SDK::RL_1, UNITREE_LEGGED_SDK::RL_2, // LH
         UNITREE_LEGGED_SDK::RR_0, UNITREE_LEGGED_SDK::RR_1, UNITREE_LEGGED_SDK::RR_2, // RH
     }};
 
     const std::vector<std::string> b1_motor_names
     {{
-        "FL_hip_joint", "FL_thigh_joint", "FL_calf_joint", 
+        "FL_hip_joint", "FL_thigh_joint", "FL_calf_joint",
+        "FR_hip_joint", "FR_thigh_joint", "FR_calf_joint",  
         "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint", 
-        "FR_hip_joint", "FR_thigh_joint", "FR_calf_joint", 
         "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint", 
     }};
     sensor_msgs::msg::JointState actual_joint_states_;
@@ -149,12 +149,15 @@ void lowCmdCallback(const ros2_unitree_legged_msgs::msg::LowCmd::SharedPtr msg)
 
     custom_test.actual_joint_states_.name.resize(custom_test.b1_motor_names.size());
     custom_test.actual_joint_states_.position.resize(custom_test.b1_motor_names.size());
+    custom_test.actual_joint_states_.velocity.resize(custom_test.b1_motor_names.size());
+
     custom_test.actual_joint_states_.name = custom_test.b1_motor_names;
 
     for (size_t i = 0; i < custom_test.b1_motor_names.size(); ++i)  
     {
         custom_test.actual_joint_states_.position[i]= custom_test.low_state.motorState[custom_test.b1_motor_idxs[i]].q;
-        // custom_test.actual_joint_states_.velocity[i]= custom_test.low_state.motorState[custom_test.b1_motor_idxs[i]].dq;
+        custom_test.actual_joint_states_.velocity[i]= custom_test.low_state.motorState[custom_test.b1_motor_idxs[i]].dq;
+        // std::cout << "VELOCITY: " << custom_test.low_state.motorState[custom_test.b1_motor_idxs[i]].dq << std::endl;
     } 
 
     pub_joint_state->publish(custom_test.actual_joint_states_);
