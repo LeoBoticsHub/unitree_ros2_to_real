@@ -6,12 +6,13 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 
 find_package(sensor_msgs REQUIRED)
+find_package(trajectory_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(std_srvs REQUIRED)
 
-set(ROS_DEPS rclcpp sensor_msgs nav_msgs geometry_msgs tf2_ros std_srvs ros2_unitree_legged_msgs)
+set(ROS_DEPS rclcpp sensor_msgs nav_msgs geometry_msgs tf2_ros std_srvs ros2_unitree_legged_msgs trajectory_msgs)
 
 find_package(ros2_unitree_legged_msgs REQUIRED)
 
@@ -50,6 +51,10 @@ add_executable(test_udp src/test_udp.cpp)
 target_link_libraries(test_udp ${EXTRA_LIBS})
 ament_target_dependencies(test_udp ${ROS_DEPS})
 
+add_executable(position_sender src/position_sender.cpp)
+target_link_libraries(position_sender ${EXTRA_LIBS})
+ament_target_dependencies(position_sender ${ROS_DEPS})
+
 # add_executable(ros2_walk_example src/ros2_walk_example.cpp)
 # target_link_libraries(ros2_walk_example ${EXTRA_LIBS})
 # ament_target_dependencies(ros2_walk_example rclcpp ros2_unitree_legged_msgs)
@@ -71,6 +76,7 @@ ament_target_dependencies(unitree_ros2_client ${ROS_DEPS})
 install(TARGETS
     ros2_udp
     test_udp
+    position_sender
     # ros2_walk_example
     ros2_position_example
     unitree_high_ros2_control
