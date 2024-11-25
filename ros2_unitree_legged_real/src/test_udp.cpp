@@ -145,22 +145,22 @@ void lowCmdCallback(const ros2_unitree_legged_msgs::msg::LowCmd::SharedPtr msg)
 
     low_state_ros = state2rosMsg(custom_test.low_state);
 
-    custom_test.actual_joint_states_.header.stamp = ros_clock.now();
+    // custom_test.actual_joint_states_.header.stamp = ros_clock.now();
 
-    custom_test.actual_joint_states_.name.resize(custom_test.b1_motor_names.size());
-    custom_test.actual_joint_states_.position.resize(custom_test.b1_motor_names.size());
-    custom_test.actual_joint_states_.velocity.resize(custom_test.b1_motor_names.size());
+    // custom_test.actual_joint_states_.name.resize(custom_test.b1_motor_names.size());
+    // custom_test.actual_joint_states_.position.resize(custom_test.b1_motor_names.size());
+    // custom_test.actual_joint_states_.velocity.resize(custom_test.b1_motor_names.size());
 
-    custom_test.actual_joint_states_.name = custom_test.b1_motor_names;
+    // custom_test.actual_joint_states_.name = custom_test.b1_motor_names;
 
-    for (size_t i = 0; i < custom_test.b1_motor_names.size(); ++i)  
-    {
-        custom_test.actual_joint_states_.position[i]= custom_test.low_state.motorState[custom_test.b1_motor_idxs[i]].q;
-        custom_test.actual_joint_states_.velocity[i]= custom_test.low_state.motorState[custom_test.b1_motor_idxs[i]].dq;
-        // std::cout << "VELOCITY: " << custom_test.low_state.motorState[custom_test.b1_motor_idxs[i]].dq << std::endl;
-    } 
+    // for (size_t i = 0; i < custom_test.b1_motor_names.size(); ++i)  
+    // {
+    //     custom_test.actual_joint_states_.position[i]= custom_test.low_state.motorState[custom_test.b1_motor_idxs[i]].q;
+    //     custom_test.actual_joint_states_.velocity[i]= custom_test.low_state.motorState[custom_test.b1_motor_idxs[i]].dq;
+    //     // std::cout << "VELOCITY: " << custom_test.low_state.motorState[custom_test.b1_motor_idxs[i]].dq << std::endl;
+    // } 
 
-    pub_joint_state->publish(custom_test.actual_joint_states_);
+    // pub_joint_state->publish(custom_test.actual_joint_states_);
     pub_low->publish(low_state_ros);
 
     // std::cout << "------------------------------------------" << std::endl;
@@ -172,6 +172,31 @@ void lowCmdCallback(const ros2_unitree_legged_msgs::msg::LowCmd::SharedPtr msg)
     // std::cout << custom_test.low_state.bms.current << std::endl;
 
     // printf("lowCmdCallback ending!\t%ld\n\n", ::low_count++);
+}
+
+void jointStatePublisher(CustomTest* custom_test)
+{
+
+    ros2_unitree_legged_msgs::msg::LowState low_state_ros;
+
+    low_state_ros = state2rosMsg(custom_test->low_state);
+
+    custom_test->actual_joint_states_.header.stamp = ros_clock.now();
+
+    custom_test->actual_joint_states_.name.resize(custom_test->b1_motor_names.size());
+    custom_test->actual_joint_states_.position.resize(custom_test->b1_motor_names.size());
+    custom_test->actual_joint_states_.velocity.resize(custom_test->b1_motor_names.size());
+
+    custom_test->actual_joint_states_.name = custom_test->b1_motor_names;
+
+    for (size_t i = 0; i < custom_test->b1_motor_names.size(); ++i)  
+    {
+        custom_test->actual_joint_states_.position[i]= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].q;
+        custom_test->actual_joint_states_.velocity[i]= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].dq;
+    } 
+
+    pub_joint_state->publish(custom_test->actual_joint_states_);
+
 }
 
 int main(int argc, char **argv)
@@ -247,9 +272,11 @@ int main(int argc, char **argv)
         
         LoopFunc loop_udpSendL("low_udp_send", 0.002, 3, boost::bind(&CustomTest::lowUdpSend, &custom_test));
         LoopFunc loop_udpRecvL("low_udp_recv", 0.002, 3, boost::bind(&CustomTest::lowUdpRecv, &custom_test));
+        LoopFunc loop_jointState("joint_state_send", 0.002, 3, boost::bind(jointStatePublisher, &custom_test));
 
         loop_udpRecvL.start();
         loop_udpSendL.start();
+        loop_jointState.start();
 
         rclcpp::spin(node);
     }
