@@ -48,84 +48,116 @@ public:
 
     ros2_unitree_legged_msgs::msg::LowCmd low_cmd_ros;
 
+    std::vector<double> previous_positions_;  // Store previous positions
+    rclcpp::Time previous_time_;
+    bool first_iteration = true;
+
     void trajectoryCallback(const trajectory_msgs::msg::JointTrajectory::SharedPtr msg)
     {
-        this->low_cmd_ros.motor_cmd[FL_0].q = msg->points[0].positions[0];
-        this->low_cmd_ros.motor_cmd[FL_0].dq = 0.0;
-        this->low_cmd_ros.motor_cmd[FL_0].kp = 5.0;
-        this->low_cmd_ros.motor_cmd[FL_0].kd = 1.0;
+        rclcpp::Time current_time = this->now();
+        if(first_iteration == false)
+        {        // Calculate time difference
 
-        this->low_cmd_ros.motor_cmd[FL_1].q = msg->points[0].positions[1];
-        this->low_cmd_ros.motor_cmd[FL_1].dq = 0.0;
-        this->low_cmd_ros.motor_cmd[FL_1].kp = 5.0;
-        this->low_cmd_ros.motor_cmd[FL_1].kd = 1.0;
+            double time_diff = (current_time - previous_time_).seconds();
+            std::cout << "--------------------------------------TIME-----------------------" << time_diff << std::endl;
+            // Guard against zero or negative time_diff
+            if (time_diff <= 0.0)
+            {
+                RCLCPP_WARN(this->get_logger(), "Time difference is non-positive. Skipping velocity calculation.");
+                return;
+            }
 
-        this->low_cmd_ros.motor_cmd[FL_2].q = msg->points[0].positions[2];
-        this->low_cmd_ros.motor_cmd[FL_2].dq = 0.0;
-        this->low_cmd_ros.motor_cmd[FL_2].kp = 5.0;
-        this->low_cmd_ros.motor_cmd[FL_2].kd = 1.0;
+            // Calculate velocities for each joint
+            std::vector<double> velocities(msg->points[0].positions.size());
+            for (size_t i = 0; i < velocities.size(); ++i)
+            {
+                velocities[i] = (msg->points[0].positions[i] - previous_positions_[i]) / time_diff;
+            }
 
-        this->low_cmd_ros.motor_cmd[FR_0].q = msg->points[0].positions[3];
-        this->low_cmd_ros.motor_cmd[FR_0].dq = 0.0;
-        this->low_cmd_ros.motor_cmd[FR_0].kp = 5.0;
-        this->low_cmd_ros.motor_cmd[FR_0].kd = 1.0;
+            this->low_cmd_ros.motor_cmd[FL_0].q = msg->points[0].positions[0];
+            this->low_cmd_ros.motor_cmd[FL_0].dq = velocities[0];
+            this->low_cmd_ros.motor_cmd[FL_0].kp = 100.0;
+            this->low_cmd_ros.motor_cmd[FL_0].kd = 0.6;
 
-        this->low_cmd_ros.motor_cmd[FR_1].q = msg->points[0].positions[4];
-        this->low_cmd_ros.motor_cmd[FR_1].dq = 0.0;
-        this->low_cmd_ros.motor_cmd[FR_1].kp = 5.0;
-        this->low_cmd_ros.motor_cmd[FR_1].kd = 1.0;
+            this->low_cmd_ros.motor_cmd[FL_1].q = msg->points[0].positions[1];
+            this->low_cmd_ros.motor_cmd[FL_1].dq = velocities[1];
+            this->low_cmd_ros.motor_cmd[FL_1].kp = 100.0;
+            this->low_cmd_ros.motor_cmd[FL_1].kd = 0.6;
 
-        this->low_cmd_ros.motor_cmd[FR_2].q = msg->points[0].positions[5];
-        this->low_cmd_ros.motor_cmd[FR_2].dq = 0.0;
-        this->low_cmd_ros.motor_cmd[FR_2].kp = 5.0;
-        this->low_cmd_ros.motor_cmd[FR_2].kd = 1.0;
+            this->low_cmd_ros.motor_cmd[FL_2].q = msg->points[0].positions[2];
+            this->low_cmd_ros.motor_cmd[FL_2].dq = velocities[2];
+            this->low_cmd_ros.motor_cmd[FL_2].kp = 110.0;
+            this->low_cmd_ros.motor_cmd[FL_2].kd = 0.6;
 
-        this->low_cmd_ros.motor_cmd[RL_0].q = msg->points[0].positions[6];
-        this->low_cmd_ros.motor_cmd[RL_0].dq = 0.0;
-        this->low_cmd_ros.motor_cmd[RL_0].kp = 5.0;
-        this->low_cmd_ros.motor_cmd[RL_0].kd = 1.0;
+            this->low_cmd_ros.motor_cmd[FR_0].q = msg->points[0].positions[3];
+            this->low_cmd_ros.motor_cmd[FR_0].dq = velocities[3];
+            this->low_cmd_ros.motor_cmd[FR_0].kp = 100.0;
+            this->low_cmd_ros.motor_cmd[FR_0].kd = 0.6;
 
-        this->low_cmd_ros.motor_cmd[RL_1].q = msg->points[0].positions[7];
-        this->low_cmd_ros.motor_cmd[RL_1].dq = 0.0;
-        this->low_cmd_ros.motor_cmd[RL_1].kp = 5.0;
-        this->low_cmd_ros.motor_cmd[RL_1].kd = 1.0;
+            this->low_cmd_ros.motor_cmd[FR_1].q = msg->points[0].positions[4];
+            this->low_cmd_ros.motor_cmd[FR_1].dq = velocities[4];
+            this->low_cmd_ros.motor_cmd[FR_1].kp = 100.0;
+            this->low_cmd_ros.motor_cmd[FR_1].kd = 0.6;
 
-        this->low_cmd_ros.motor_cmd[RL_2].q = msg->points[0].positions[8];
-        this->low_cmd_ros.motor_cmd[RL_2].dq = 0.0;
-        this->low_cmd_ros.motor_cmd[RL_2].kp = 5.0;
-        this->low_cmd_ros.motor_cmd[RL_2].kd = 1.0;
+            this->low_cmd_ros.motor_cmd[FR_2].q = msg->points[0].positions[5];
+            this->low_cmd_ros.motor_cmd[FR_2].dq = velocities[5];
+            this->low_cmd_ros.motor_cmd[FR_2].kp = 110.0;
+            this->low_cmd_ros.motor_cmd[FR_2].kd = 0.6;
 
-        this->low_cmd_ros.motor_cmd[RR_0].q = msg->points[0].positions[9];
-        this->low_cmd_ros.motor_cmd[RR_0].dq = 0.0;
-        this->low_cmd_ros.motor_cmd[RR_0].kp = 5.0;
-        this->low_cmd_ros.motor_cmd[RR_0].kd = 1.0;
+            this->low_cmd_ros.motor_cmd[RL_0].q = msg->points[0].positions[6];
+            this->low_cmd_ros.motor_cmd[RL_0].dq = velocities[6];
+            this->low_cmd_ros.motor_cmd[RL_0].kp = 100.0;
+            this->low_cmd_ros.motor_cmd[RL_0].kd = 0.6;
 
-        this->low_cmd_ros.motor_cmd[RR_1].q = msg->points[0].positions[10];
-        this->low_cmd_ros.motor_cmd[RR_1].dq = 0.0;
-        this->low_cmd_ros.motor_cmd[RR_1].kp = 5.0;
-        this->low_cmd_ros.motor_cmd[RR_1].kd = 1.0;
+            this->low_cmd_ros.motor_cmd[RL_1].q = msg->points[0].positions[7];
+            this->low_cmd_ros.motor_cmd[RL_1].dq = velocities[7];
+            this->low_cmd_ros.motor_cmd[RL_1].kp = 100.0;
+            this->low_cmd_ros.motor_cmd[RL_1].kd = 0.6;
 
-        this->low_cmd_ros.motor_cmd[RR_2].q = msg->points[0].positions[11];
-        this->low_cmd_ros.motor_cmd[RR_2].dq = 0.0;
-        this->low_cmd_ros.motor_cmd[RR_2].kp = 5.0;
-        this->low_cmd_ros.motor_cmd[RR_2].kd = 1.0;
+            this->low_cmd_ros.motor_cmd[RL_2].q = msg->points[0].positions[8];
+            this->low_cmd_ros.motor_cmd[RL_2].dq = velocities[8];
+            this->low_cmd_ros.motor_cmd[RL_2].kp = 120.0;
+            this->low_cmd_ros.motor_cmd[RL_2].kd = 0.5;
 
-        // std::cout << "----------------------------------------------------------------------------------" << std::endl;
-        // std::cout << "-------------------------------Last point: " << this->low_cmd_ros.motor_cmd[FL_0].q << std::endl;
-        // std::cout << "-------------------------------Last point: " << this->low_cmd_ros.motor_cmd[FL_1].q << std::endl;
-        // std::cout << "-------------------------------Last point: " << this->low_cmd_ros.motor_cmd[FL_2].q << std::endl;
-        // std::cout << "-------------------------------Last point: " << this->low_cmd_ros.motor_cmd[FR_0].q << std::endl;
-        // std::cout << "-------------------------------Last point: " << this->low_cmd_ros.motor_cmd[FR_1].q << std::endl;
-        // std::cout << "-------------------------------Last point: " << this->low_cmd_ros.motor_cmd[FR_2].q << std::endl;
-        // std::cout << "-------------------------------Last point: " << this->low_cmd_ros.motor_cmd[RL_0].q << std::endl;
-        // std::cout << "-------------------------------Last point: " << this->low_cmd_ros.motor_cmd[RL_1].q << std::endl;
-        // std::cout << "-------------------------------Last point: " << this->low_cmd_ros.motor_cmd[RL_2].q << std::endl;
-        // std::cout << "-------------------------------Last point: " << this->low_cmd_ros.motor_cmd[RR_0].q << std::endl;
-        // std::cout << "-------------------------------Last point: " << this->low_cmd_ros.motor_cmd[RR_1].q << std::endl;
-        // std::cout << "-------------------------------Last point: " << this->low_cmd_ros.motor_cmd[RR_2].q << std::endl;
-        // std::cout << "----------------------------------------------------------------------------------" << std::endl;
+            this->low_cmd_ros.motor_cmd[RR_0].q = msg->points[0].positions[9];
+            this->low_cmd_ros.motor_cmd[RR_0].dq = velocities[9];
+            this->low_cmd_ros.motor_cmd[RR_0].kp = 100.0;
+            this->low_cmd_ros.motor_cmd[RR_0].kd = 0.6;
 
-        joint_trajectory_pub_->publish(low_cmd_ros);        
+            this->low_cmd_ros.motor_cmd[RR_1].q = msg->points[0].positions[10];
+            this->low_cmd_ros.motor_cmd[RR_1].dq = velocities[10];
+            this->low_cmd_ros.motor_cmd[RR_1].kp = 100.0;
+            this->low_cmd_ros.motor_cmd[RR_1].kd = 0.6;
+
+            this->low_cmd_ros.motor_cmd[RR_2].q = msg->points[0].positions[11];
+            this->low_cmd_ros.motor_cmd[RR_2].dq = velocities[11];
+            this->low_cmd_ros.motor_cmd[RR_2].kp = 120.0;
+            this->low_cmd_ros.motor_cmd[RR_2].kd = 0.5;
+
+            // std::cout << "----------------------------------------------------------------------------------" << std::endl;
+            // std::cout << "-------------------------------Last point: " << velocities[0] << std::endl;
+            // std::cout << "-------------------------------Last point: " << velocities[1] << std::endl;
+            // std::cout << "-------------------------------Last point: " << velocities[2] << std::endl;
+            // std::cout << "-------------------------------Last point: " << velocities[3] << std::endl;
+            // std::cout << "-------------------------------Last point: " << velocities[4] << std::endl;
+            // std::cout << "-------------------------------Last point: " << velocities[5] << std::endl;
+            // std::cout << "-------------------------------Last point: " << velocities[6] << std::endl;
+            // std::cout << "-------------------------------Last point: " << velocities[7] << std::endl;
+            // std::cout << "-------------------------------Last point: " << velocities[8] << std::endl;
+            // std::cout << "-------------------------------Last point: " << velocities[9] << std::endl;
+            // std::cout << "-------------------------------Last point: " << velocities[10] << std::endl;
+            // std::cout << "-------------------------------Last point: " << velocities[11] << std::endl;
+            // std::cout << "----------------------------------------------------------------------------------" << std::endl;
+
+            joint_trajectory_pub_->publish(low_cmd_ros);
+        }
+        if(first_iteration == true)
+        {
+            first_iteration = false;
+        }
+
+        previous_positions_ = msg->points[0].positions;
+        previous_time_ = current_time;        
     }
 };
 
