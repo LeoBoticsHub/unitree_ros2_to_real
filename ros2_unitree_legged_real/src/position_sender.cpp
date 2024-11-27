@@ -59,7 +59,7 @@ public:
         {        // Calculate time difference
 
             double time_diff = (current_time - previous_time_).seconds();
-            std::cout << "--------------------------------------TIME-----------------------" << time_diff << std::endl;
+            // std::cout << "--------------------------------------TIME-----------------------" << time_diff << std::endl;
             // Guard against zero or negative time_diff
             if (time_diff <= 0.0)
             {
@@ -76,63 +76,63 @@ public:
 
             this->low_cmd_ros.motor_cmd[FL_0].q = msg->points[0].positions[0];
             this->low_cmd_ros.motor_cmd[FL_0].dq = velocities[0];
-            this->low_cmd_ros.motor_cmd[FL_0].kp = 100.0;
-            this->low_cmd_ros.motor_cmd[FL_0].kd = 0.6;
+            this->low_cmd_ros.motor_cmd[FL_0].kp = 120.0;
+            this->low_cmd_ros.motor_cmd[FL_0].kd = 2.0;
 
             this->low_cmd_ros.motor_cmd[FL_1].q = msg->points[0].positions[1];
             this->low_cmd_ros.motor_cmd[FL_1].dq = velocities[1];
-            this->low_cmd_ros.motor_cmd[FL_1].kp = 100.0;
-            this->low_cmd_ros.motor_cmd[FL_1].kd = 0.6;
+            this->low_cmd_ros.motor_cmd[FL_1].kp = 120.0;
+            this->low_cmd_ros.motor_cmd[FL_1].kd = 2.0;
 
             this->low_cmd_ros.motor_cmd[FL_2].q = msg->points[0].positions[2];
             this->low_cmd_ros.motor_cmd[FL_2].dq = velocities[2];
-            this->low_cmd_ros.motor_cmd[FL_2].kp = 110.0;
-            this->low_cmd_ros.motor_cmd[FL_2].kd = 0.6;
+            this->low_cmd_ros.motor_cmd[FL_2].kp = 130.0;
+            this->low_cmd_ros.motor_cmd[FL_2].kd = 2.0;
 
             this->low_cmd_ros.motor_cmd[FR_0].q = msg->points[0].positions[3];
             this->low_cmd_ros.motor_cmd[FR_0].dq = velocities[3];
-            this->low_cmd_ros.motor_cmd[FR_0].kp = 100.0;
-            this->low_cmd_ros.motor_cmd[FR_0].kd = 0.6;
+            this->low_cmd_ros.motor_cmd[FR_0].kp = 120.0;
+            this->low_cmd_ros.motor_cmd[FR_0].kd = 2.0;
 
             this->low_cmd_ros.motor_cmd[FR_1].q = msg->points[0].positions[4];
             this->low_cmd_ros.motor_cmd[FR_1].dq = velocities[4];
-            this->low_cmd_ros.motor_cmd[FR_1].kp = 100.0;
-            this->low_cmd_ros.motor_cmd[FR_1].kd = 0.6;
+            this->low_cmd_ros.motor_cmd[FR_1].kp = 120.0;
+            this->low_cmd_ros.motor_cmd[FR_1].kd = 2.0;
 
             this->low_cmd_ros.motor_cmd[FR_2].q = msg->points[0].positions[5];
             this->low_cmd_ros.motor_cmd[FR_2].dq = velocities[5];
-            this->low_cmd_ros.motor_cmd[FR_2].kp = 110.0;
-            this->low_cmd_ros.motor_cmd[FR_2].kd = 0.6;
+            this->low_cmd_ros.motor_cmd[FR_2].kp = 130.0;
+            this->low_cmd_ros.motor_cmd[FR_2].kd = 2.0;
 
             this->low_cmd_ros.motor_cmd[RL_0].q = msg->points[0].positions[6];
             this->low_cmd_ros.motor_cmd[RL_0].dq = velocities[6];
-            this->low_cmd_ros.motor_cmd[RL_0].kp = 100.0;
-            this->low_cmd_ros.motor_cmd[RL_0].kd = 0.6;
+            this->low_cmd_ros.motor_cmd[RL_0].kp = 120.0;
+            this->low_cmd_ros.motor_cmd[RL_0].kd = 2.0;
 
             this->low_cmd_ros.motor_cmd[RL_1].q = msg->points[0].positions[7];
             this->low_cmd_ros.motor_cmd[RL_1].dq = velocities[7];
-            this->low_cmd_ros.motor_cmd[RL_1].kp = 100.0;
-            this->low_cmd_ros.motor_cmd[RL_1].kd = 0.6;
+            this->low_cmd_ros.motor_cmd[RL_1].kp = 120.0;
+            this->low_cmd_ros.motor_cmd[RL_1].kd = 2.0;
 
             this->low_cmd_ros.motor_cmd[RL_2].q = msg->points[0].positions[8];
             this->low_cmd_ros.motor_cmd[RL_2].dq = velocities[8];
-            this->low_cmd_ros.motor_cmd[RL_2].kp = 120.0;
-            this->low_cmd_ros.motor_cmd[RL_2].kd = 0.5;
+            this->low_cmd_ros.motor_cmd[RL_2].kp = 140.0;
+            this->low_cmd_ros.motor_cmd[RL_2].kd = 2.0;
 
             this->low_cmd_ros.motor_cmd[RR_0].q = msg->points[0].positions[9];
             this->low_cmd_ros.motor_cmd[RR_0].dq = velocities[9];
-            this->low_cmd_ros.motor_cmd[RR_0].kp = 100.0;
-            this->low_cmd_ros.motor_cmd[RR_0].kd = 0.6;
+            this->low_cmd_ros.motor_cmd[RR_0].kp = 120.0;
+            this->low_cmd_ros.motor_cmd[RR_0].kd = 2.0;
 
             this->low_cmd_ros.motor_cmd[RR_1].q = msg->points[0].positions[10];
             this->low_cmd_ros.motor_cmd[RR_1].dq = velocities[10];
-            this->low_cmd_ros.motor_cmd[RR_1].kp = 100.0;
-            this->low_cmd_ros.motor_cmd[RR_1].kd = 0.6;
+            this->low_cmd_ros.motor_cmd[RR_1].kp = 120.0;
+            this->low_cmd_ros.motor_cmd[RR_1].kd = 2.0;
 
             this->low_cmd_ros.motor_cmd[RR_2].q = msg->points[0].positions[11];
             this->low_cmd_ros.motor_cmd[RR_2].dq = velocities[11];
-            this->low_cmd_ros.motor_cmd[RR_2].kp = 120.0;
-            this->low_cmd_ros.motor_cmd[RR_2].kd = 0.5;
+            this->low_cmd_ros.motor_cmd[RR_2].kp = 140.0;
+            this->low_cmd_ros.motor_cmd[RR_2].kd = 2.0;
 
             // std::cout << "----------------------------------------------------------------------------------" << std::endl;
             // std::cout << "-------------------------------Last point: " << velocities[0] << std::endl;
