@@ -8,6 +8,7 @@
 
 #include <tf2_ros/transform_broadcaster.h>
 #include <sensor_msgs/msg/joint_state.hpp>
+#include <sensor_msgs/msg/temperature.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/battery_state.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -61,6 +62,7 @@ public:
         "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint", 
     }};
     sensor_msgs::msg::JointState actual_joint_states_;
+    sensor_msgs::msg::Temperature actual_joint_temperatures_;
 
 public:
     CustomTest()
@@ -112,6 +114,7 @@ rclcpp::Subscription<ros2_unitree_legged_msgs::msg::LowCmd>::SharedPtr sub_low;
 rclcpp::Publisher<ros2_unitree_legged_msgs::msg::HighState>::SharedPtr pub_high;
 rclcpp::Publisher<ros2_unitree_legged_msgs::msg::LowState>::SharedPtr pub_low;
 rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr pub_joint_state;
+rclcpp::Publisher<sensor_msgs::msg::Temperature>::SharedPtr pub_joint_temperature;
 
 long high_count = 0;
 long low_count = 0;
@@ -182,10 +185,13 @@ void jointStatePublisher(CustomTest* custom_test)
     low_state_ros = state2rosMsg(custom_test->low_state);
 
     custom_test->actual_joint_states_.header.stamp = ros_clock.now();
+    custom_test->actual_joint_temperatures_.header.stamp = ros_clock.now();
 
     custom_test->actual_joint_states_.name.resize(custom_test->b1_motor_names.size());
     custom_test->actual_joint_states_.position.resize(custom_test->b1_motor_names.size());
     custom_test->actual_joint_states_.velocity.resize(custom_test->b1_motor_names.size());
+    custom_test->actual_joint_states_.effort.resize(custom_test->b1_motor_names.size());
+
 
     custom_test->actual_joint_states_.name = custom_test->b1_motor_names;
 
@@ -193,8 +199,11 @@ void jointStatePublisher(CustomTest* custom_test)
     {
         custom_test->actual_joint_states_.position[i]= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].q;
         custom_test->actual_joint_states_.velocity[i]= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].dq;
-    } 
+        custom_test->actual_joint_states_.effort[i]= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].tauEst;
+        custom_test->actual_joint_temperatures_.temperature= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].temperature;
 
+        pub_joint_temperature->publish(custom_test->actual_joint_temperatures_);
+    } 
     pub_joint_state->publish(custom_test->actual_joint_states_);
 
 }
@@ -268,6 +277,7 @@ int main(int argc, char **argv)
 
         pub_low = node->create_publisher<ros2_unitree_legged_msgs::msg::LowState>("low_state", 1);
         pub_joint_state = node->create_publisher<sensor_msgs::msg::JointState>("test_joint_states", 1);
+        pub_joint_temperature = node->create_publisher<sensor_msgs::msg::Temperature>("joint_temperature", 1);
         sub_low = node->create_subscription<ros2_unitree_legged_msgs::msg::LowCmd>("low_cmd", 1, lowCmdCallback);
         
         LoopFunc loop_udpSendL("low_udp_send", 0.002, 3, boost::bind(&CustomTest::lowUdpSend, &custom_test));
