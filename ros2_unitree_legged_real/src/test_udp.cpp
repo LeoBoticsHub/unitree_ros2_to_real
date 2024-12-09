@@ -201,13 +201,12 @@ void evetPublisher(CustomTest* custom_test)
 
     for (size_t i = 0; i < custom_test->b1_motor_names.size(); ++i)  
     {
-        custom_test->evet_.q_error= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].q;
+        custom_test->evet_.q_error= joint_trajectory.position[i] - custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].q;
         custom_test->evet_.dq= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].dq;
         custom_test->evet_.tau_est= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].tauEst;
         custom_test->evet_.temperature= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].temperature;
 
         pub_evet->publish(custom_test->evet_);
-        std::cout << "---------------------------------------MESSAGE PUBLISHED----------------------------" << std::endl;
     } 
 }
 
@@ -309,6 +308,8 @@ int main(int argc, char **argv)
     {
         printf("low level runing!\n");
 
+        joint_trajectory.position.resize(12,0.0);
+        
         pub_low = node->create_publisher<ros2_unitree_legged_msgs::msg::LowState>("low_state", 1);
         pub_joint_state = node->create_publisher<sensor_msgs::msg::JointState>("test_joint_states", 1);
         pub_joint_temperature = node->create_publisher<sensor_msgs::msg::Temperature>("joint_temperature", 1);
