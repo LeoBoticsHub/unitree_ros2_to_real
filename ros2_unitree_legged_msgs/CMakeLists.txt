@@ -31,6 +31,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/LowState.msg"
   "msg/HighCmd.msg"
   "msg/HighState.msg"
+  "msg/Evet.msg"
   "srv/GetBatteryState.srv"
   "srv/GetFloat.srv"
   "srv/GetInt.srv"
