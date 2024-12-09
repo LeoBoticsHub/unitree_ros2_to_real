@@ -28,6 +28,10 @@
 #include "ros2_unitree_legged_msgs/msg/high_state.hpp"
 #include "ros2_unitree_legged_msgs/msg/low_cmd.hpp"
 #include "ros2_unitree_legged_msgs/msg/low_state.hpp"
+#include "ros2_unitree_legged_msgs/msg/evet.hpp"
+#include <trajectory_msgs/msg/joint_trajectory.hpp>
+#include <trajectory_msgs/msg/joint_trajectory_point.hpp>
+
 #include "convert.h"
 
 
@@ -63,6 +67,7 @@ public:
     }};
     sensor_msgs::msg::JointState actual_joint_states_;
     sensor_msgs::msg::Temperature actual_joint_temperatures_;
+    ros2_unitree_legged_msgs::msg::Evet evet_;
 
 public:
     CustomTest()
@@ -110,15 +115,19 @@ CustomTest custom_test;
 
 rclcpp::Subscription<ros2_unitree_legged_msgs::msg::HighCmd>::SharedPtr sub_high;
 rclcpp::Subscription<ros2_unitree_legged_msgs::msg::LowCmd>::SharedPtr sub_low;
+rclcpp::Subscription<trajectory_msgs::msg::JointTrajectory>::SharedPtr sub_joint_trajectory;
 
 rclcpp::Publisher<ros2_unitree_legged_msgs::msg::HighState>::SharedPtr pub_high;
 rclcpp::Publisher<ros2_unitree_legged_msgs::msg::LowState>::SharedPtr pub_low;
+rclcpp::Publisher<ros2_unitree_legged_msgs::msg::Evet>::SharedPtr pub_evet;
+
 rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr pub_joint_state;
 rclcpp::Publisher<sensor_msgs::msg::Temperature>::SharedPtr pub_joint_temperature;
 
 long high_count = 0;
 long low_count = 0;
 auto ros_clock = rclcpp::Clock(RCL_ROS_TIME);
+sensor_msgs::msg::JointState joint_trajectory;
 
 void highCmdCallback(const ros2_unitree_legged_msgs::msg::HighCmd::SharedPtr msg)
 {
@@ -175,6 +184,31 @@ void lowCmdCallback(const ros2_unitree_legged_msgs::msg::LowCmd::SharedPtr msg)
     // std::cout << custom_test.low_state.bms.current << std::endl;
 
     // printf("lowCmdCallback ending!\t%ld\n\n", ::low_count++);
+}
+
+void trajectoryCallback(const trajectory_msgs::msg::JointTrajectory::SharedPtr msg)
+{
+    joint_trajectory.position.resize(12);
+    joint_trajectory.position = msg->points[0].positions;    
+}
+
+void evetPublisher(CustomTest* custom_test)
+{
+
+    ros2_unitree_legged_msgs::msg::LowState low_state_ros;
+
+    low_state_ros = state2rosMsg(custom_test->low_state);
+
+    for (size_t i = 0; i < custom_test->b1_motor_names.size(); ++i)  
+    {
+        custom_test->evet_.q_error= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].q;
+        custom_test->evet_.dq= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].dq;
+        custom_test->evet_.tau_est= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].tauEst;
+        custom_test->evet_.temperature= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].temperature;
+
+        pub_evet->publish(custom_test->evet_);
+        std::cout << "---------------------------------------MESSAGE PUBLISHED----------------------------" << std::endl;
+    } 
 }
 
 void jointStatePublisher(CustomTest* custom_test)
@@ -278,15 +312,21 @@ int main(int argc, char **argv)
         pub_low = node->create_publisher<ros2_unitree_legged_msgs::msg::LowState>("low_state", 1);
         pub_joint_state = node->create_publisher<sensor_msgs::msg::JointState>("test_joint_states", 1);
         pub_joint_temperature = node->create_publisher<sensor_msgs::msg::Temperature>("joint_temperature", 1);
+        pub_evet = node->create_publisher<ros2_unitree_legged_msgs::msg::Evet>("evet", 1);
+
         sub_low = node->create_subscription<ros2_unitree_legged_msgs::msg::LowCmd>("low_cmd", 1, lowCmdCallback);
-        
+        sub_joint_trajectory = node->create_subscription<trajectory_msgs::msg::JointTrajectory>(
+        "joint_group_effort_controller/joint_trajectory", 10, trajectoryCallback);
+
         LoopFunc loop_udpSendL("low_udp_send", 0.002, 3, boost::bind(&CustomTest::lowUdpSend, &custom_test));
         LoopFunc loop_udpRecvL("low_udp_recv", 0.002, 3, boost::bind(&CustomTest::lowUdpRecv, &custom_test));
         LoopFunc loop_jointState("joint_state_send", 0.002, 3, boost::bind(jointStatePublisher, &custom_test));
+        LoopFunc loop_evet("evet_send", 0.002, 3, boost::bind(evetPublisher, &custom_test));
 
         loop_udpRecvL.start();
         loop_udpSendL.start();
         loop_jointState.start();
+        loop_evet.start();
 
         rclcpp::spin(node);
     }
