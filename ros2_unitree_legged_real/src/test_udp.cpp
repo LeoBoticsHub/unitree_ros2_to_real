@@ -66,7 +66,7 @@ public:
         "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint", 
     }};
     sensor_msgs::msg::JointState actual_joint_states_;
-    sensor_msgs::msg::Temperature actual_joint_temperatures_;
+    // ros2_unitree_legged_msgs::msg::JointsTemperature actual_joint_temperatures_;
     ros2_unitree_legged_msgs::msg::Evet evet_;
 
 public:
@@ -199,15 +199,21 @@ void evetPublisher(CustomTest* custom_test)
 
     low_state_ros = state2rosMsg(custom_test->low_state);
 
+    custom_test->evet_.q_error.resize(12);
+    custom_test->evet_.dq.resize(12);
+    custom_test->evet_.tau_est.resize(12);
+    custom_test->evet_.temperature.resize(12);
+
     for (size_t i = 0; i < custom_test->b1_motor_names.size(); ++i)  
     {
-        custom_test->evet_.q_error= joint_trajectory.position[i] - custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].q;
-        custom_test->evet_.dq= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].dq;
-        custom_test->evet_.tau_est= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].tauEst;
-        custom_test->evet_.temperature= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].temperature;
+        custom_test->evet_.q_error[i] = joint_trajectory.position[i] - custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].q;
+        custom_test->evet_.dq[i] = custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].dq;
+        custom_test->evet_.tau_est[i] = custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].tauEst;
+        custom_test->evet_.temperature[i] = custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].temperature;
+    }
 
-        pub_evet->publish(custom_test->evet_);
-    } 
+    pub_evet->publish(custom_test->evet_);
+
 }
 
 void jointStatePublisher(CustomTest* custom_test)
@@ -218,7 +224,7 @@ void jointStatePublisher(CustomTest* custom_test)
     low_state_ros = state2rosMsg(custom_test->low_state);
 
     custom_test->actual_joint_states_.header.stamp = ros_clock.now();
-    custom_test->actual_joint_temperatures_.header.stamp = ros_clock.now();
+    // custom_test->actual_joint_temperatures_.temperatures.resize(custom_test->b1_motor_names.size());
 
     custom_test->actual_joint_states_.name.resize(custom_test->b1_motor_names.size());
     custom_test->actual_joint_states_.position.resize(custom_test->b1_motor_names.size());
@@ -233,11 +239,12 @@ void jointStatePublisher(CustomTest* custom_test)
         custom_test->actual_joint_states_.position[i]= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].q;
         custom_test->actual_joint_states_.velocity[i]= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].dq;
         custom_test->actual_joint_states_.effort[i]= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].tauEst;
-        custom_test->actual_joint_temperatures_.temperature= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].temperature;
+        // custom_test->actual_joint_temperatures_.temperatures[i].temperature= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].temperature;
 
-        pub_joint_temperature->publish(custom_test->actual_joint_temperatures_);
     } 
     pub_joint_state->publish(custom_test->actual_joint_states_);
+    // pub_joint_temperature->publish(custom_test->actual_joint_temperatures_);
+
 
 }
 
