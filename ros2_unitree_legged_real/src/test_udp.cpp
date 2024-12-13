@@ -173,7 +173,7 @@ void lowCmdCallback(const ros2_unitree_legged_msgs::msg::LowCmd::SharedPtr msg)
     // } 
 
     // pub_joint_state->publish(custom_test.actual_joint_states_);
-    pub_low->publish(low_state_ros);
+    // pub_low->publish(low_state_ros);
 
     // std::cout << "------------------------------------------" << std::endl;
     // std::cout << custom_test.low_state.motorState[UNITREE_LEGGED_SDK::FL_0].q << std::endl;
@@ -203,16 +203,36 @@ void evetPublisher(CustomTest* custom_test)
     custom_test->evet_.dq.resize(12);
     custom_test->evet_.tau_est.resize(12);
     custom_test->evet_.temperature.resize(12);
+    
+    custom_test->actual_joint_states_.header.stamp = ros_clock.now();
+    // custom_test->actual_joint_temperatures_.temperatures.resize(custom_test->b1_motor_names.size());
+
+    custom_test->actual_joint_states_.name.resize(custom_test->b1_motor_names.size());
+    custom_test->actual_joint_states_.position.resize(custom_test->b1_motor_names.size());
+    custom_test->actual_joint_states_.velocity.resize(custom_test->b1_motor_names.size());
+    custom_test->actual_joint_states_.effort.resize(custom_test->b1_motor_names.size());
+
+
+    custom_test->actual_joint_states_.name = custom_test->b1_motor_names;
 
     for (size_t i = 0; i < custom_test->b1_motor_names.size(); ++i)  
     {
         custom_test->evet_.q_error[i] = joint_trajectory.position[i] - custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].q;
-        custom_test->evet_.dq[i] = custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].dq;
-        custom_test->evet_.tau_est[i] = custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].tauEst;
-        custom_test->evet_.temperature[i] = custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].temperature;
-    }
+        custom_test->actual_joint_states_.position[i]= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].q;
 
+        custom_test->evet_.dq[i] = custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].dq;
+        custom_test->actual_joint_states_.velocity[i]= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].dq;
+
+        custom_test->evet_.tau_est[i] = custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].tauEst;
+        custom_test->actual_joint_states_.effort[i]= custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].tauEst;
+
+        custom_test->evet_.temperature[i] = custom_test->low_state.motorState[custom_test->b1_motor_idxs[i]].temperature;
+        
+    }
+    
+    pub_low->publish(low_state_ros);
     pub_evet->publish(custom_test->evet_);
+    pub_joint_state->publish(custom_test->actual_joint_states_);
 
 }
 
@@ -319,7 +339,7 @@ int main(int argc, char **argv)
         
         pub_low = node->create_publisher<ros2_unitree_legged_msgs::msg::LowState>("low_state", 1);
         pub_joint_state = node->create_publisher<sensor_msgs::msg::JointState>("test_joint_states", 1);
-        pub_joint_temperature = node->create_publisher<sensor_msgs::msg::Temperature>("joint_temperature", 1);
+        // pub_joint_temperature = node->create_publisher<sensor_msgs::msg::Temperature>("joint_temperature", 1);
         pub_evet = node->create_publisher<ros2_unitree_legged_msgs::msg::Evet>("evet", 1);
 
         sub_low = node->create_subscription<ros2_unitree_legged_msgs::msg::LowCmd>("low_cmd", 1, lowCmdCallback);
@@ -328,12 +348,12 @@ int main(int argc, char **argv)
 
         LoopFunc loop_udpSendL("low_udp_send", 0.002, 3, boost::bind(&CustomTest::lowUdpSend, &custom_test));
         LoopFunc loop_udpRecvL("low_udp_recv", 0.002, 3, boost::bind(&CustomTest::lowUdpRecv, &custom_test));
-        LoopFunc loop_jointState("joint_state_send", 0.002, 3, boost::bind(jointStatePublisher, &custom_test));
+        // LoopFunc loop_jointState("joint_state_send", 0.002, 3, boost::bind(jointStatePublisher, &custom_test));
         LoopFunc loop_evet("evet_send", 0.002, 3, boost::bind(evetPublisher, &custom_test));
 
         loop_udpRecvL.start();
         loop_udpSendL.start();
-        loop_jointState.start();
+        // loop_jointState.start();
         loop_evet.start();
 
         rclcpp::spin(node);
