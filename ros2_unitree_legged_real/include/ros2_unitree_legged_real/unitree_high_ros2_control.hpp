@@ -19,7 +19,7 @@
 #include <sensor_msgs/msg/battery_state.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/twist.hpp>
-#include <std_msgs/msg/int16_multi_array.hpp>
+// #include <std_msgs/msg/int16_multi_array.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
 #include "unitree_legged_sdk/unitree_legged_sdk.h"
@@ -30,7 +30,7 @@
 #include "ros2_unitree_legged_msgs/srv/set_body_orientation.hpp"
 #include "ros2_unitree_legged_msgs/srv/set_float.hpp"
 #include "ros2_unitree_legged_msgs/srv/set_int.hpp"
-
+#include "ros2_unitree_legged_msgs/msg/foot_force.hpp"
 using namespace UNITREE_LEGGED_SDK;
 
 
@@ -134,7 +134,8 @@ private:
     rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_states_pub_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
-    rclcpp::Publisher<std_msgs::msg::Int16MultiArray>::SharedPtr feet_force_pub_;
+    // rclcpp::Publisher<std_msgs::msg::Int16MultiArray>::SharedPtr feet_force_pub_;
+    rclcpp::Publisher<ros2_unitree_legged_msgs::msg::FootForce>::SharedPtr foot_force_pub_;
     std::shared_ptr<tf2_ros::TransformBroadcaster> tf_pub_;
 
     // * Services
@@ -157,7 +158,8 @@ private:
     nav_msgs::msg::Odometry odom_msg_;
     sensor_msgs::msg::BatteryState battery_msg_;
     geometry_msgs::msg::TransformStamped odom_H_trunk_;
-    std_msgs::msg::Int16MultiArray feet_force_msg_;
+    // std_msgs::msg::Int16MultiArray feet_force_msg_;
+    ros2_unitree_legged_msgs::msg::FootForce foot_force_msg_;
 
     // * Constants
     const int N_MOTORS{12};
