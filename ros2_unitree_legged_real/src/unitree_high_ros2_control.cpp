@@ -228,6 +228,7 @@ void UnitreeRos2HighController::highStatePublisher()
 	    }
 
         // foot force
+        feet_force_msg_.data.clear();
         for (unsigned int foot_id = 0; foot_id < N_FEET; foot_id++)
         {
             feet_force_msg_.data.push_back(custom_->high_state.footForce[foot_id]);
