@@ -96,6 +96,7 @@ void UnitreeRos2HighController::init_class()
     imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("imu", 1);
     joint_states_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 1);
     odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("robot_odom", 1);
+    feet_force_pub_ = this->create_publisher<std_msgs::msg::Int16MultiArray>("feet_force", 1);
     tf_pub_ = std::make_shared<tf2_ros::TransformBroadcaster>(*this);
 
     // * Services
@@ -226,6 +227,12 @@ void UnitreeRos2HighController::highStatePublisher()
             joint_state_msg_.effort[motor_id]   = static_cast<double>(custom_->high_state.motorState[b1_motor_idxs[motor_id]].tauEst);
 	    }
 
+        // foot force
+        for (unsigned int foot_id = 0; foot_id < N_FEET; foot_id++)
+        {
+            feet_force_msg_.data.push_back(custom_->high_state.footForce[foot_id]);
+        }
+
         // imu
 	    imu_msg_.header.stamp = t_;
 	    imu_msg_.header.frame_id = tf_namespace_ + IMU_NAME;
@@ -268,6 +275,7 @@ void UnitreeRos2HighController::highStatePublisher()
         joint_states_pub_->publish(joint_state_msg_);
         imu_pub_->publish(imu_msg_);
         odom_pub_->publish(odom_msg_);
+        feet_force_pub_->publish(feet_force_msg_);
 
         // check wirless remote received commands (used to bypass ros cmd_vel if needed)
         memcpy(&custom_->keyData, &custom_->high_state.wirelessRemote[0], 40); 
