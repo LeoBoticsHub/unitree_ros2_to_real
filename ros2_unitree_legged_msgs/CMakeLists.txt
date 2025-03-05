@@ -18,6 +18,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MotorCmd.msg"
@@ -31,13 +32,14 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/LowState.msg"
   "msg/HighCmd.msg"
   "msg/HighState.msg"
+  "msg/FootForce.msg"
   "srv/GetBatteryState.srv"
   "srv/GetFloat.srv"
   "srv/GetInt.srv"
   "srv/SetBodyOrientation.srv"
   "srv/SetFloat.srv"
   "srv/SetInt.srv"
-  DEPENDENCIES geometry_msgs sensor_msgs
+  DEPENDENCIES geometry_msgs sensor_msgs std_msgs
 )
 
 ament_export_dependencies(rosidl_default_runtime)
